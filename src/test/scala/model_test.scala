@@ -5,6 +5,42 @@ class PositionSuite extends FunSuite with ShouldMatchers {
   trait Fixture extends Model {
     val area = new Area(10, 20)
   }
+ 
+  test("Position() は Area の width と height の範囲外を設定したら例外を出す") {
+    new Fixture {      
+      evaluating { Position(-1, 0)  } should produce [OutsideAreaException]
+      evaluating { Position(-0, -1)  } should produce [OutsideAreaException]
+      evaluating { Position(10, 0) } should produce [OutsideAreaException]
+      evaluating { Position(0, 20) } should produce [OutsideAreaException]
+    }
+  }
+
+  test("x と y を設定する時も範囲チェックは行なわれている") {
+    new Fixture {
+      val pos = Position(0, 0)
+
+      def check(func: => Unit) {
+        evaluating { func } should produce [OutsideAreaException]
+      }
+
+      List((-1, 0), (0, -1), (10, 0), (0, 20)) foreach {
+        p =>
+        check { pos.x = p._1; pos.y = p._2 }
+      }
+
+      List((11, 0), (0, 21)) foreach {
+        p =>
+        check { pos += p }
+        check { pos += Position(p._1, p._2) }
+      }
+
+      List((1, 0), (0, 1)) foreach {
+        p =>
+        check { pos -= p }
+        check { pos -= Position(p._1, p._2) }
+      }        
+    }
+  }  
 
   test("Position#+= メソッドで x と y の座標を足すことが出来る") {
     new Fixture {
@@ -13,25 +49,6 @@ class PositionSuite extends FunSuite with ShouldMatchers {
       pos should be (Position(5, 7))
       pos -= (3, 4)
       pos should be (Position(2, 3))
-    }
-  }
-
-  test("AreaChecker を mix-in していた場合は Area の範囲外には出来ない") {
-    new Fixture {
-      def position(x: Int, y: Int) = new Position(x, y) with AreaChecker
-      
-      List((0, 1), (1, 0), (11, 1), (1, 21)) foreach {
-        pos =>
-        evaluating {
-          position(pos._1, pos._2)
-        } should produce [ArrayIndexOutOfBoundsException]
-      }
-      
-      val pos = position(1, 1)
-      evaluating { pos.x  = 11 } should produce [ArrayIndexOutOfBoundsException]
-      evaluating { pos.y += 20 } should produce [ArrayIndexOutOfBoundsException]
-      evaluating { pos.x -=  1 } should produce [ArrayIndexOutOfBoundsException]
-      evaluating { pos.y  =  0 } should produce [ArrayIndexOutOfBoundsException]      
     }
   }
 }
@@ -57,44 +74,49 @@ class AreaSuite extends FunSuite with ShouldMatchers {
     new Fixture(5, 10) {
       area(1, 3) = HILL
       area(1, 3) should be (HILL)
-      area(11) should be (HILL)
+      area(16) should be (HILL)
       area(Position(1, 3)) should be(HILL)
       
       area(Position(3, 5)) = FOREST
       area(Position(3, 5)) should be (FOREST)      
         
-      area(area.size) = GRASS
-      area(area.size) should be (GRASS)
-      area(5, 10) should be (GRASS)
-      area(Position(5, 10)) should be (GRASS)
+      area(area.size - 1) = GRASS
+      area(area.size - 1) should be (GRASS)
+      area(4, 9) should be (GRASS)
+      area(Position(4, 9)) should be (GRASS)
     }  
   }
 
-  test("マップデータのインデックスは1から数える。" +
-       "1より小さかったり最大値より大きかった場合は例外を出す")
+  test("マップデータのインデックスは0から数える。" +
+       "0より小さかったり最大値(width - 1, height - 1, size - 1)より" +
+       "大きかった場合は例外を出す")
   {
     new Fixture(5, 5) {
-      area(1, 1) should be (FLAT)      
-      evaluating { area(0, 0) } should produce [ArrayIndexOutOfBoundsException]      
+      area(0, 0) should be (FLAT)      
+      evaluating { area(-1, -1) } should produce [OutsideAreaException]      
 
-      area(5, 5) should be (FLAT)
-      evaluating { area(6, 6) } should produce [ArrayIndexOutOfBoundsException]
+      area(4, 4) should be (FLAT)
+      evaluating { area(5, 5) } should produce [OutsideAreaException]
 
-      area(1) should be (FLAT)      
-      evaluating { area(0) } should produce [ArrayIndexOutOfBoundsException]
+      area(0) should be (FLAT)      
+      evaluating { area(-1) } should produce [OutsideAreaException]
 
-      area(area.size) should be (FLAT)      
-      evaluating { area(area.size + 1) } should produce [ArrayIndexOutOfBoundsException]
+      area(area.size - 1) should be (FLAT)      
+      evaluating { area(area.size) } should produce [OutsideAreaException]
     }
   }
 }
 
 class CharacterSuite extends FunSuite with ShouldMatchers {
   import scala.collection.mutable.ArrayBuffer
+  import AreaStatus._
   
-  trait Fixture extends Model {
-    val area = new Area(20, 20)
+  class Fixture(width: Int, height: Int) extends Model {
+    val area = new Area(width, height)
     val player = new Player(1)
+    
+    def toInt(flags: Area[Boolean]) =
+      flags.data map { if (_) 1 else 0 } toList
 
     def createCharacter(x: Int, y: Int) =
       new Character(player, x, y)
@@ -102,7 +124,7 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
 
   test("Character を生成したら Model.characters で Player.characters に追加され、" +
        "Character#destroy で除かれる。" ) {
-    new Fixture {
+    new Fixture(20, 20) {
       self =>
 
       def check(func: ArrayBuffer[Character] => Unit) =
@@ -114,7 +136,7 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
       check {
         buffer =>
         buffer.size should be (1)
-        buffer.exists (_ == c1) should be (true)
+        buffer.exists(_ == c1) should be (true)
       }      
       
       val c2 = createCharacter(10, 10)
@@ -136,60 +158,119 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
     }
   }
 
-  test("Character#pos が Area の範囲外だった場合は例外を出す") {
-    new Fixture {
-      val c1 = createCharacter(10, 10)
-      c1.pos should be (Position(10, 10))
-      evaluating {
-        c1.pos = Position(1, 0)
-      } should produce [ArrayIndexOutOfBoundsException]
+  test("Character#moveRange は移動できる範囲のリストを戻す。" +
+       "Character#move はその値を参照して移動を行なう。" +     
+       "Area の範囲外は移動できない。") {
 
-      evaluating {
-        c1.pos += Position(-10, 0)
-      } should produce [ArrayIndexOutOfBoundsException]
-    }
-  }
-  test("移動させてみる。") {
-    new Fixture {
-//      val c1 = new Character(player, Position(10, 10))
-//      c1 move (5, 6)
+    // 検証データが手打なんであんまりチェックでけてない。
+    // とりあえず真ん中とよつはし隅っこだけはチェックした。
+    new Fixture(5, 5) {
+      val c1 = new Character(player, 2, 2) { movePoint = 2 }
+      implicit var flags: Area[Boolean] = c1.moveRange
 
+      List(
+        0, 0, 1, 0, 0,
+        0, 1, 1, 1, 0,
+        1, 1, 1, 1, 1,
+        0, 1, 1, 1, 0,
+        0, 0, 1, 0, 0 
+      ) should be (toInt(flags))
+
+      List(
+                        (2, 0),
+                (1, 1), (2, 1), (3, 1),
+        (0, 2), (1, 2), (2, 2), (3, 2), (4, 2),
+                (1, 3), (2, 3), (3, 3),
+                        (2, 4)
+      ) foreach {
+        case(x, y) =>
+        c1.move(x, y)
+        c1.pos should be (Position(x, y))
+      }
+        
+      List(
+        (0, 0), (1, 0),         (3, 0), (4, 0),
+        (0, 1),                         (4, 1),
+
+        (0, 3),                         (4, 3),
+        (0, 4), (1, 4),         (3, 4), (4, 4)
+      ) foreach {
+        case(x, y) =>
+        evaluating {
+          c1.move(x, y)
+        } should produce [OutsideMoveRangeException]
+      }
+
+      c1.pos = Position(0, 0)
+      List(
+        1, 1, 1, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0        
+      ) should be (toInt(c1.moveRange))
+
+      c1.pos = Position(4, 0)
+      List(
+        0, 0, 1, 1, 1,
+        0, 0, 0, 1, 1,
+        0, 0, 0, 0, 1,
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0
+      ) should be (toInt(c1.moveRange))
+      
+      c1.pos = Position(0, 4)
+      List(
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0,
+        1, 1, 0, 0, 0,
+        1, 1, 1, 0, 0        
+      ) should be (toInt(c1.moveRange))
+
+      c1.pos = Position(4, 4)
+      List(
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0, 1,
+        0, 0, 0, 1, 1,
+        0, 0, 1, 1, 1
+      ) should be (toInt(c1.moveRange))            
     }
-    
- //    c1.
+
+    // ちょっと広めのも一度だけテストしてみる。
+    new Fixture(7, 7) {
+      val c1 = new Character(player, 2, 2)
+      c1.movePoint = 5
+      List(
+        1, 1, 1, 1, 1, 1, 0,
+        1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 0,
+        1, 1, 1, 1, 1, 0, 0,
+        0, 1, 1, 1, 0, 0, 0
+      ) should be (toInt(c1.moveRange))
+    }
   }
   
   test("Character の生成や移動をする時、" +
-       "その座標既に別の Character が居たら例外を出す")
+       "その座標既に別の Character がいたら移動できない"
   {
     
   }
   
+
   test("他のプレイヤーの場所には行けない")(pending)
   
   test("攻撃してみる")(pending)
-/*  
-  test("Position() は Area の width と height の範囲外を設定したら例外を出す") {
-    new Fixture {      
-      evaluating { Position(0, 1)  } should produce [ArrayIndexOutOfBoundsException]
-      evaluating { Position(1, 0)  } should produce [ArrayIndexOutOfBoundsException]
-      evaluating { Position(11, 1) } should produce [ArrayIndexOutOfBoundsException]
-      evaluating { Position(1, 21) } should produce [ArrayIndexOutOfBoundsException]
-    }
-  }
-
-  test("x と y を設定する時も範囲チェックは行なわれている") {
-    new Fixture {
-      val pos = Position(1, 1)      
-      evaluating { pos.x = 0  } should produce [ArrayIndexOutOfBoundsException]
-      evaluating { pos.y = 0  } should produce [ArrayIndexOutOfBoundsException]
-      evaluating { pos.x = 11 } should produce [ArrayIndexOutOfBoundsException]
-      evaluating { pos.y = 21 } should produce [ArrayIndexOutOfBoundsException]
-    }
-  }
-*/  
 }
 
+
+
+
+
+////////////////////////////////////////////////////  
 /*
 class ManagerSuite extends FunSuite with ShouldMatchers {
   class Fixture() {
