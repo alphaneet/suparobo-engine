@@ -8,8 +8,8 @@ class PositionSuite extends FunSuite with ShouldMatchers {
  
   test("Position() は Area の width と height の範囲外を設定したら例外を出す") {
     new Fixture {      
-      evaluating { Position(-1, 0)  } should produce [OutsideAreaException]
-      evaluating { Position(-0, -1)  } should produce [OutsideAreaException]
+      evaluating { Position(-1, 0) } should produce [OutsideAreaException]
+      evaluating { Position(-0, -1) } should produce [OutsideAreaException]
       evaluating { Position(10, 0) } should produce [OutsideAreaException]
       evaluating { Position(0, 20) } should produce [OutsideAreaException]
     }
@@ -255,7 +255,7 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
   }
   
   test("Character の生成や移動をする時、" +
-       "その座標既に別の Character がいたら移動できない"
+       "その座標既に別の Character がいたら移動できない")
   {
     
   }

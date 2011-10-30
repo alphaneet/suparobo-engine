@@ -5,6 +5,7 @@ object AreaStatus extends Enumeration {
 
 trait Model extends NotNull {
   self =>
+    
 
   import scala.collection.mutable.ArrayBuffer
   import AreaStatus._
