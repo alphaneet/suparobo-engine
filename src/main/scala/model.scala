@@ -4,8 +4,7 @@ object AreaStatus extends Enumeration {
 }
 
 trait Model extends NotNull {
-  self =>
-    
+  self =>    
 
   import scala.collection.mutable.ArrayBuffer
   import AreaStatus._
@@ -81,18 +80,36 @@ trait Model extends NotNull {
     def checkRectangle(pos: Position)  { checkRectangle(pos.x, pos.y)  }
   }
 
-  class Character(val player: Player, var pos: Position) extends NotNull {
+  class Character(val player: Player, private var _pos: Position) extends NotNull {
     def this(player: Player, x: Int, y: Int) = this(player, Position(x, y))
     
     self.characters += this
     player.characters += this
+    pos = _pos
     
     var hitPoint = 0
-    var movePoint = 0    
+    var movePoint = 0
 
+    def pos = _pos
+    def pos_=(pos: Position) {
+      if (isPositionUsed(pos.x, pos.y)) {
+        throw new UsedAreaPositionException("x = %d, y = %d".format(pos.x, pos.y))
+      }
+      _pos = pos
+    }
+
+    def isPositionUsed(x: Int, y: Int): Boolean = isPositionUsed(Position(x, y))
+    def isPositionUsed(pos: Position): Boolean = {
+      self.characters exists {
+        other =>
+        other != this && other.pos == pos
+      }
+    }
+    
     /**
      * テスト書く時とかのチェックデータ吐く時とかに使います。
      */
+    def printMoveRange() { printMoveRange(moveRange) }
     def printMoveRange(flags: Area[Boolean]) {
       val width = self.area.width
       flags.data.zipWithIndex foreach {
@@ -120,6 +137,7 @@ trait Model extends NotNull {
       def check(x: Int, y: Int, movePoint: Int) {
         if (movePoint < 0) return
         if (flags(x, y) == true && points(x, y) >= movePoint) return
+        if (isPositionUsed(x, y)) return
 
         flags(x, y) = true
         points(x, y) = movePoint

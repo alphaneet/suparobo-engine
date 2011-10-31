@@ -120,6 +120,14 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
 
     def createCharacter(x: Int, y: Int) =
       new Character(player, x, y)
+
+    def createCharacters(positions: Pair[Int, Int]*): List[Character] = {
+      positions.zipWithIndex map {
+        case (pos, index) =>
+        val (x, y) = pos
+        new Character(new Player(index), x, y)
+      } toList
+    }
   }
 
   test("Character を生成したら Model.characters で Player.characters に追加され、" +
@@ -139,7 +147,7 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
         buffer.exists(_ == c1) should be (true)
       }      
       
-      val c2 = createCharacter(10, 10)
+      val c2 = createCharacter(11, 11)
       check {
         buffer =>
         buffer.size should be (2)
@@ -161,11 +169,12 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
   test("Character#moveRange は移動できる範囲のリストを戻す。" +
        "Character#move はその値を参照して移動を行なう。" +     
        "Area の範囲外は移動できない。") {
-
+    
     // 検証データが手打なんであんまりチェックでけてない。
     // とりあえず真ん中とよつはし隅っこだけはチェックした。
     new Fixture(5, 5) {
-      val c1 = new Character(player, 2, 2) { movePoint = 2 }
+      val c1 = createCharacter(2, 2)
+      c1.movePoint = 2
       implicit var flags: Area[Boolean] = c1.moveRange
 
       List(
@@ -240,7 +249,7 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
 
     // ちょっと広めのも一度だけテストしてみる。
     new Fixture(7, 7) {
-      val c1 = new Character(player, 2, 2)
+      val c1 = createCharacter(2, 2)
       c1.movePoint = 5
       List(
         1, 1, 1, 1, 1, 1, 0,
@@ -255,42 +264,79 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
   }
   
   test("Character の生成や移動をする時、" +
-       "その座標既に別の Character がいたら移動できない")
-  {
-    
-  }
-  
+       "その座標既に別の Character がいたら移動できない。") {
+    new Fixture(8, 8) {
+      val list = createCharacters((3, 3), (2, 2), (3, 5), (2, 5))
+      val c1 :: c2 :: c3 :: c4 :: Nil = list
+      List(2, 3, 4, 5).zipWithIndex foreach {
+        case (movePoint, index) =>
+        list(index).movePoint = movePoint
+      }
 
-  test("他のプレイヤーの場所には行けない")(pending)
-  
+      // Position(3, 3), movePoint(2)
+      List(
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 1, 0, 0, 0, 0,
+        0, 0, 0, 1, 1, 0, 0, 0,
+        0, 1, 1, 1, 1, 1, 0, 0,
+        0, 0, 1, 1, 1, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0
+      ) should be (toInt(c1.moveRange))
+
+      // Position(2, 2), movePoint(3)
+      List(
+        0, 1, 1, 1, 0, 0, 0, 0,
+        1, 1, 1, 1, 1, 0, 0, 0,
+        1, 1, 1, 1, 1, 1, 0, 0,
+        1, 1, 1, 0, 1, 0, 0, 0,
+        0, 1, 1, 1, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0
+      ) should be (toInt(c2.moveRange))
+
+      // Position(3, 5), movePoint(4)
+      List(
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 1, 0, 0, 0,
+        0, 1, 1, 0, 1, 1, 0, 0,
+        1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 0, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 0,
+        0, 1, 1, 1, 1, 1, 0, 0
+      ) should be (toInt(c3.moveRange))
+
+      // Position(2, 5), movePoint(5)
+      List(
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 1, 0, 0, 0, 0, 0, 0,
+        1, 1, 0, 0, 1, 0, 0, 0,
+        1, 1, 1, 0, 1, 1, 0, 0,
+        1, 1, 1, 1, 1, 1, 1, 0,
+        1, 1, 1, 0, 1, 1, 0, 0,
+        1, 1, 1, 1, 1, 1, 1, 0,
+        1, 1, 1, 1, 1, 1, 0, 0
+      ) should be (toInt(c4.moveRange))
+    }    
+  }
+
+  test("他の Character が存在する座標を指定した場合、例外を出す") {
+    new Fixture(5, 5) {
+      val c1 :: c2 :: Nil = createCharacters((1, 1), (2, 3))
+
+      evaluating {
+        c2.pos = Position(1, 1)
+      } should produce [UsedAreaPositionException]
+      
+      // インスタンス生成時でも例外を出す。
+      evaluating {
+        new Character(player, 1, 1)
+      } should produce [UsedAreaPositionException]
+    }
+  }
+    
   test("攻撃してみる")(pending)
 }
-
-
-
-
-
-////////////////////////////////////////////////////  
-/*
-class ManagerSuite extends FunSuite with ShouldMatchers {
-  class Fixture() {
-    val manager = new Manager() {
-      val players = Manager.createPlayers(2)
-      val area = new Area(10, 10)
-      players foreach {
-        _.characters ++= (0 until 5) map {
-          Function.const(new Character {})
-        }
-      }
-    }
-  }
-  
-  test("aiueo") {
-    new Fixture() {
-//      manager.players.isInstanceOf[List[Player]] should be (true)
-//      true should be (true)
-      println(manager.getClass)
-    }
-  }
-}
-*/
