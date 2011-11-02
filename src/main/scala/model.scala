@@ -4,10 +4,12 @@ object AreaStatus extends Enumeration {
 }
 
 trait Model extends NotNull {
-  self =>    
-
+  self =>
+    
   import scala.collection.mutable.ArrayBuffer
   import AreaStatus._
+
+  implicit def pair2Position(pair: Pair[Int, Int]) = Position(pair._1, pair._2)
 
   // マップの外に出た場合
   type OutsideAreaException = ArrayIndexOutOfBoundsException
@@ -31,23 +33,8 @@ trait Model extends NotNull {
     def x_=(x: Int) { self.area.checkWidth(x);  _x = x }
     def y_=(y: Int) { self.area.checkHeight(y); _y = y }
 
-    def +=(pos: Position) {
-      x += pos.x
-      y += pos.y
-    }
-    def +=(pos: Pair[Int, Int]) {
-      x += pos._1
-      y += pos._2
-    }
-    
-    def -=(pos: Position) {
-      x -= pos.x
-      y -= pos.y
-    }
-    def -=(pos: Pair[Int, Int]) {
-      x -= pos._1
-      y -= pos._2
-    }    
+    def +=(pos: Position) { x += pos.x; y += pos.y }    
+    def -=(pos: Position) { x -= pos.x; y -= pos.y }
   }
 
   class Area[T: ClassManifest](val width: Int, val height: Int, defaultValue: T = FLAT)

@@ -5,6 +5,20 @@ class PositionSuite extends FunSuite with ShouldMatchers {
   trait Fixture extends Model {
     val area = new Area(10, 20)
   }
+
+  test("Pair[Int, Int] は Position に暗黙の型変換される") {
+    new Fixture {
+      val pos: Position = (3, 5)
+      pos.x should be (3)
+      pos.y should be (5)
+      
+      pos += (5, 6)
+      pos should be (Position(8, 11))
+
+      pos -= (7, 3)
+      pos should be (Position(1, 8))
+    }
+  }
  
   test("Position() は Area の width と height の範囲外を設定したら例外を出す") {
     new Fixture {      
@@ -130,7 +144,7 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
     }
   }
 
-  test("Character を生成したら Model.characters で Player.characters に追加され、" +
+  test("Character を生成したら Model.characters と Player.characters に追加され、" +
        "Character#destroy で除かれる。" ) {
     new Fixture(20, 20) {
       self =>
