@@ -79,7 +79,7 @@ trait Model extends NotNull {
 
     def pos = _pos
     def pos_=(pos: Position) {
-      if (isPositionUsed(pos.x, pos.y)) {
+      if (isPositionUsed(pos)) {
         throw new UsedAreaPositionException("x = %d, y = %d".format(pos.x, pos.y))
       }
       _pos = pos
@@ -104,8 +104,6 @@ trait Model extends NotNull {
         
         if (i != 0 && i % width == 0) println
       
-        val x = (i % width) 
-        val y = (i / width)
         val ch = if (flag == true) '1' else '0'
         val sep = if (i == flags.data.length - 1) "" else ", "
         print(ch + sep)
