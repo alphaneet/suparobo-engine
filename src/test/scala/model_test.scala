@@ -1,6 +1,55 @@
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
+class AreaStatusSuite extends FunSuite with ShouldMatchers {
+  trait Fixture extends Model {
+    val area = new Area(10, 10)
+    
+    // 絶対存在しなさそうなシンボル    
+    val uniqSymbol  = 'status123456789
+    val uniqSymbol2 = 'status987654321
+  }
+
+  test("AreaStatus は AreaStatus(symbol, movePoint) で作成し、" +
+       "AreaStatus(symbol) で取得する")
+  {
+    new Fixture {
+      val createStatus = AreaStatus(uniqSymbol, 3)
+      val getStatus = AreaStatus(uniqSymbol)
+
+      createStatus should be (getStatus)
+      
+      // getStatus.symbol should be (uniqSymbol) は失敗する謎がある
+      (getStatus.symbol == uniqSymbol) should be (true)
+      getStatus.movePoint should be (3)      
+    }
+  }
+  
+  test("同じシンボルの AreaStatus は作成出来ない") {
+    new Fixture {
+      evaluating {
+        AreaStatus(uniqSymbol, 3)
+        AreaStatus(uniqSymbol, 3)
+      } should produce [UsedAreaStatusException]      
+    }
+  }
+
+  test("存在しないシンボルを取得しようとすると例外が出る") {
+    new Fixture {      
+      evaluating {
+        AreaStatus(uniqSymbol)
+      } should produce [NoSuchAreaStatusException]
+    }
+  }
+
+  test("movePoint が 0 以下だと isMove は falase になる") {
+    new Fixture {
+      AreaStatus(uniqSymbol,  3).isMove should be (true)
+      AreaStatus(uniqSymbol2, 0).isMove should be (false)
+    }
+  }
+}
+
 class PositionSuite extends FunSuite with ShouldMatchers {
   trait Fixture extends Model {
     val area = new Area(10, 20)
@@ -23,7 +72,7 @@ class PositionSuite extends FunSuite with ShouldMatchers {
   test("Position() は Area の width と height の範囲外を設定したら例外を出す") {
     new Fixture {      
       evaluating { Position(-1, 0) } should produce [OutsideAreaException]
-      evaluating { Position(-0, -1) } should produce [OutsideAreaException]
+      evaluating { Position(0, -1) } should produce [OutsideAreaException]
       evaluating { Position(10, 0) } should produce [OutsideAreaException]
       evaluating { Position(0, 20) } should produce [OutsideAreaException]
     }
@@ -68,8 +117,6 @@ class PositionSuite extends FunSuite with ShouldMatchers {
 }
 
 class AreaSuite extends FunSuite with ShouldMatchers {
-  import AreaStatus._
-
   class Fixture(val width: Int, val height: Int) extends Model {
     val area = new Area(width, height)
   }
@@ -91,13 +138,13 @@ class AreaSuite extends FunSuite with ShouldMatchers {
       area(16) should be (HILL)
       area(Position(1, 3)) should be(HILL)
       
-      area(Position(3, 5)) = FOREST
-      area(Position(3, 5)) should be (FOREST)      
+      area(Position(3, 5)) = WOOD
+      area(Position(3, 5)) should be (WOOD)      
         
-      area(area.size - 1) = GRASS
-      area(area.size - 1) should be (GRASS)
-      area(4, 9) should be (GRASS)
-      area(Position(4, 9)) should be (GRASS)
+      area(area.size - 1) = MOUNT
+      area(area.size - 1) should be (MOUNT)
+      area(4, 9) should be (MOUNT)
+      area(Position(4, 9)) should be (MOUNT)
     }  
   }
 
@@ -123,7 +170,6 @@ class AreaSuite extends FunSuite with ShouldMatchers {
 
 class CharacterSuite extends FunSuite with ShouldMatchers {
   import scala.collection.mutable.ArrayBuffer
-  import AreaStatus._
   
   class Fixture(width: Int, height: Int) extends Model {
     val area = new Area(width, height)
@@ -142,6 +188,13 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
         new Character(new Player(index), x, y)
       } toList
     }
+
+    def setArea(statuses: List[Symbol]) {
+      statuses.zipWithIndex.foreach {
+        case (status, i) =>
+        area(i) = AreaStatus(status)
+      }
+    }    
   }
 
   test("Character を生成したら Model.characters と Player.characters に追加され、" +
@@ -351,6 +404,88 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
       } should produce [UsedAreaPositionException]
     }
   }
-    
-  test("攻撃してみる")(pending)
+
+  test("WOOD  の地点は移動力 -2 になる") {    
+    new Fixture(5, 5) {
+      setArea {
+        List(
+          'ft, 'ft, 'ft, 'ft, 'ft,
+          'ft, 'wd, 'wd, 'wd, 'wd,
+          'ft, 'wd, 'wd, 'ft, 'ft,
+          'ft, 'wd, 'ft, 'ft, 'ft,
+          'ft, 'ft, 'ft, 'ft, 'ft
+        )
+      }
+      val c = createCharacter(2, 2)
+      c.movePoint = 3
+      List(
+        0, 0, 1, 0, 0,
+        0, 0, 1, 1, 0,
+        1, 1, 1, 1, 1,
+        0, 1, 1, 1, 1,
+        0, 1, 1, 1, 0        
+      ) should be (toInt(c.moveRange))
+    }
+  }
+
+  test("HILL  の地点は移動力 -3 になる") {
+    new Fixture(5, 5) {
+      setArea {
+        List(
+          'ft, 'ft, 'ft, 'hl, 'hl,
+          'ft, 'hl, 'hl, 'ft, 'ft,
+          'ft, 'ft, 'ft, 'ft, 'ft,
+          'ft, 'ft, 'ft, 'ft, 'ft,
+          'ft, 'ft, 'ft, 'ft, 'ft
+        )
+      }
+      val c = createCharacter(2, 0)      
+      c.movePoint = 4
+      List(
+        1, 1, 1, 1, 0,
+        1, 1, 1, 1, 0,
+        1, 0, 1, 0, 0,
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0        
+      ) should be (toInt(c.moveRange))
+    }    
+  }
+
+  test("MOUNT の地点は移動出来ない") {
+    new Fixture(5, 5) {
+      setArea {
+        List(
+          'ft, 'mt, 'ft, 'mt, 'ft,
+          'ft, 'ft, 'mt, 'ft, 'ft,
+          'mt, 'ft, 'ft, 'ft, 'mt,
+          'ft, 'mt, 'mt, 'mt, 'ft,
+          'ft, 'ft, 'ft, 'ft, 'ft
+        )
+      }
+      val c = createCharacter(2, 2)      
+      c.movePoint = 100
+      List(
+        1, 0, 0, 0, 1,
+        1, 1, 0, 1, 1,
+        0, 1, 1, 1, 0,
+        0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0        
+      ) should be (toInt(c.moveRange))
+    }           
+  }
+   
+  test("AreaStatus#isMove が false の位置には Character を配置できない。") {
+    new Fixture(3, 3) {
+      setArea {
+        List(
+          'mt, 'mt, 'mt,
+          'mt, 'mt, 'mt,
+          'mt, 'mt, 'mt
+        )
+      }      
+      evaluating {        
+        createCharacter(1, 1)
+      } should produce [UsedAreaPositionException]
+    }
+  }    
 }

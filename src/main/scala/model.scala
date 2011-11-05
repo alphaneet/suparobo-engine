@@ -1,14 +1,6 @@
-object AreaStatus extends Enumeration {
-  type AreaStatus = Value
-  val FLAT, GRASS, FOREST, HILL, MOUNT, WATER = Value
-}
-
 trait Model extends NotNull {
-  self =>
+  thismodel =>
     
-  import scala.collection.mutable.ArrayBuffer
-  import AreaStatus._
-
   implicit def pair2Position(pair: Pair[Int, Int]) = Position(pair._1, pair._2)
 
   // マップの外に出た場合
@@ -19,19 +11,59 @@ trait Model extends NotNull {
   
   // その座標に既に誰かいる場合
   class UsedAreaPositionException(msg: String = "") extends Exception(msg)
+
+  // 既に使用している AreaStaus をもう一度作成しようとした場合
+  class UsedAreaStatusException(msg: String = "") extends Exception(msg)
+  
+  // 存在しない AreaStatus を呼びだそうとした場合
+  class NoSuchAreaStatusException(msg: String = "") extends Exception(msg)
+
+  // basic area statuses
+  val FLAT    = AreaStatus('ft, 1)
+//  val GRASS   = AreaStatus('gs, 1)
+  val WOOD    = AreaStatus('wd, 2)
+  val HILL    = AreaStatus('hl, 3)
+  val MOUNT   = AreaStatus('mt, 0)
+//  val WATER   = AreaStatus('wt, 0)
   
   val area: Area[AreaStatus]
-  val characters = ArrayBuffer[Character]()
-  val players = ArrayBuffer[Player]()
+  val characters = scala.collection.mutable.ArrayBuffer[Character]()
+  val players = scala.collection.mutable.ArrayBuffer[Player]()
+  
+  def printAreaStatuses = thismodel.area.printData { _.symbol }    
 
+  object AreaStatus {
+    private val values = scala.collection.mutable.Set[AreaStatus]()
+    def apply(symbol: Symbol): AreaStatus = {
+      values find {
+        _.symbol == symbol
+      } match {
+        case Some(symbol) => symbol
+        case None => throw new NoSuchAreaStatusException(symbol.toString)
+      }
+    }
+  }
+
+  /**
+   * @param symbol 制約はないが基本は小文字で二文字
+   */
+  case class AreaStatus(symbol: Symbol, movePoint: Int) {
+    if ( AreaStatus.values.exists(_.symbol == symbol) ) {
+      throw new UsedAreaStatusException(symbol.toString)
+    }
+    AreaStatus.values += this
+    
+    val isMove: Boolean = (movePoint > 0)
+  }
+  
   case class Position(private var _x: Int, private var _y: Int) extends NotNull {
-    self.area.checkRectangle(_x, _y)
+    thismodel.area.checkRectangle(_x, _y)
     
     def x = _x
     def y = _y
 
-    def x_=(x: Int) { self.area.checkWidth(x);  _x = x }
-    def y_=(y: Int) { self.area.checkHeight(y); _y = y }
+    def x_=(x: Int) { thismodel.area.checkWidth(x);  _x = x }
+    def y_=(y: Int) { thismodel.area.checkHeight(y); _y = y }
 
     def +=(pos: Position) { x += pos.x; y += pos.y }    
     def -=(pos: Position) { x -= pos.x; y -= pos.y }
@@ -65,12 +97,27 @@ trait Model extends NotNull {
     }
     def checkRectangle(x: Int, y: Int) { checkWidth(x); checkHeight(y) }
     def checkRectangle(pos: Position)  { checkRectangle(pos.x, pos.y)  }
+
+    /**
+     * テスト書く時とかのチェックデータ吐く時に使う
+     */    
+    def printData(output: T => Any) {
+      data.zipWithIndex foreach {
+        case(v, i) =>          
+        if (i != 0 && i % width == 0) println
+        val sep = if (i == data.length - 1) "" else ", "
+        print(output(v) + sep)
+      }
+      println
+    }
   }
 
   class Character(val player: Player, private var _pos: Position) extends NotNull {
+    thischaracter =>
+
     def this(player: Player, x: Int, y: Int) = this(player, Position(x, y))
     
-    self.characters += this
+    thismodel.characters += this
     player.characters += this
     pos = _pos
     
@@ -79,7 +126,7 @@ trait Model extends NotNull {
 
     def pos = _pos
     def pos_=(pos: Position) {
-      if (isPositionUsed(pos)) {
+      if (isPositionUsed(pos) || !thismodel.area(pos).isMove) {
         throw new UsedAreaPositionException("x = %d, y = %d".format(pos.x, pos.y))
       }
       _pos = pos
@@ -87,39 +134,24 @@ trait Model extends NotNull {
 
     def isPositionUsed(x: Int, y: Int): Boolean = isPositionUsed(Position(x, y))
     def isPositionUsed(pos: Position): Boolean = {
-      self.characters exists {
+      thismodel.characters exists {
         other =>
         other != this && other.pos == pos
       }
     }
     
-    /**
-     * テスト書く時とかのチェックデータ吐く時とかに使います。
-     */
-    def printMoveRange() { printMoveRange(moveRange) }
-    def printMoveRange(flags: Area[Boolean]) {
-      val width = self.area.width
-      flags.data.zipWithIndex foreach {
-        case(flag, i) =>
-        
-        if (i != 0 && i % width == 0) println
-      
-        val ch = if (flag == true) '1' else '0'
-        val sep = if (i == flags.data.length - 1) "" else ", "
-        print(ch + sep)
-      }
-      println
-    }        
+    def printMoveRange() = moveRange.printData { if (_) '1' else '0' }
     
     def moveRange: Area[Boolean] = {
       def create[T: ClassManifest](v: T) =
-        new Area(self.area.width, self.area.height, v)
+        new Area(thismodel.area.width, thismodel.area.height, v)
       
       val flags = create(false)
       val points = create(0)
       val cross = List((0, -1), (-1, 0), (0, 1), (1, 0))
 
       def check(x: Int, y: Int, movePoint: Int) {
+        if (!thismodel.area(x, y).isMove) return
         if (movePoint < 0) return
         if (flags(x, y) == true && points(x, y) >= movePoint) return
         if (isPositionUsed(x, y)) return
@@ -131,15 +163,15 @@ trait Model extends NotNull {
           val (nextX, nextY) = (x + addX, y + addY)
             
           try {
-            self.area.checkRectangle(nextX, nextY)
-            check(nextX, nextY, movePoint - 1)            
+            thismodel.area.checkRectangle(nextX, nextY)
+            check(nextX, nextY, movePoint - thismodel.area(nextX, nextY).movePoint)
           } catch {
             case _: OutsideAreaException => 
           }          
         }
       }
       
-      check(pos.x, pos.y, movePoint)
+      check(pos.x, pos.y, thischaracter.movePoint)
       flags
     }
 
@@ -149,7 +181,7 @@ trait Model extends NotNull {
     }
     
     def destroy {
-      self.characters -= this
+      thismodel.characters -= this
       player.characters -= this
     }
   }
