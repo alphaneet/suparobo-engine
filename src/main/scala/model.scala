@@ -9,7 +9,8 @@ trait Model extends NotNull {
   // 移動範囲の外に出た場合
   class OutsideMoveRangeException(msg: String = "") extends Exception(msg)
   
-  // その座標に既に誰かいる場合
+  // その座標に既に別の Character がいたり、
+  // 移動不可能な地形の座標に Character を配置した場合
   class UsedAreaPositionException(msg: String = "") extends Exception(msg)
 
   // 既に使用している AreaStatus をもう一度作成しようとした場合
@@ -42,11 +43,11 @@ trait Model extends NotNull {
       }
     }
     
-    def apply(symbol: Symbol): AreaStatus = {
-      find(_.symbol == symbol, "symbol: " + symbol)
-    }
     def apply(id: Int): AreaStatus = {
       find(_.id == id, "id: " + id)
+    }    
+    def apply(symbol: Symbol): AreaStatus = {
+      find(_.symbol == symbol, "symbol: " + symbol)
     }
   }
 
@@ -59,7 +60,7 @@ trait Model extends NotNull {
         status =>
         status.symbol == symbol || status.id == id
       }    
-    ) throw new UsedAreaStatusException(symbol.toString)
+    ) throw new UsedAreaStatusException("id: " + id + ", symbol: " + symbol)
 
     AreaStatus.values += this    
     

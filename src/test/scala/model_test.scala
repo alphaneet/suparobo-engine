@@ -7,7 +7,7 @@ class AreaStatusSuite extends FunSuite with ShouldMatchers {
     
     // 絶対存在しなさそうな id と symbol
     def uniqId(id: Int): Int = 98765 + id
-    def uniqId: Int = uniqId(0)
+    val uniqId: Int = uniqId(0)
       
     def uniqSymbol(id: Int): Symbol = Symbol("oppaiPeropero" + id)
     val uniqSymbol: Symbol = uniqSymbol(0)  
@@ -200,8 +200,7 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
     def createCharacters(positions: Pair[Int, Int]*): List[Character] = {
       positions.zipWithIndex map {
         case (pos, index) =>
-        val (x, y) = pos
-        new Character(new Player(index), x, y)
+        new Character(new Player(index), pos)
       } toList
     }
 
