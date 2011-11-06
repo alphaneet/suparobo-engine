@@ -5,47 +5,63 @@ class AreaStatusSuite extends FunSuite with ShouldMatchers {
   trait Fixture extends Model {
     val area = new Area(10, 10)
     
-    // 絶対存在しなさそうなシンボル    
-    val uniqSymbol  = 'status123456789
-    val uniqSymbol2 = 'status987654321
+    // 絶対存在しなさそうな id と symbol
+    def uniqId(id: Int): Int = 98765 + id
+    def uniqId: Int = uniqId(0)
+      
+    def uniqSymbol(id: Int): Symbol = Symbol("oppaiPeropero" + id)
+    val uniqSymbol: Symbol = uniqSymbol(0)  
   }
 
-  test("AreaStatus は AreaStatus(symbol, movePoint) で作成し、" +
-       "AreaStatus(symbol) で取得する")
+  test("AreaStatus は AreaStatus(id, symbol, movePoint) で作成し、" +
+       "AreaStatus(id or symbol) で取得する")
   {
     new Fixture {
-      val createStatus = AreaStatus(uniqSymbol, 3)
-      val getStatus = AreaStatus(uniqSymbol)
-
-      createStatus should be (getStatus)
+      val createStatus = AreaStatus(uniqId, uniqSymbol, 3)
+      val findStatusById = AreaStatus(uniqId)
+      val findStatusBySymbol = AreaStatus(uniqSymbol)
       
-      // getStatus.symbol should be (uniqSymbol) は失敗する謎がある
-      (getStatus.symbol == uniqSymbol) should be (true)
-      getStatus.movePoint should be (3)      
+      createStatus should be (findStatusById)
+      createStatus should be (findStatusBySymbol)
+      
+      findStatusById.id should be (uniqId)
+      // findStatusById.symbol should be (uniqSymbol) は失敗する謎がある
+      (findStatusById.symbol == uniqSymbol) should be (true)
+      findStatusById.movePoint should be (3)
     }
   }
   
-  test("同じシンボルの AreaStatus は作成出来ない") {
+  test("同じ id や symbol の AreaStatus は作成出来ない") {
     new Fixture {
-      evaluating {
-        AreaStatus(uniqSymbol, 3)
-        AreaStatus(uniqSymbol, 3)
-      } should produce [UsedAreaStatusException]      
+      def check(func: => Unit) =
+        evaluating(func) should produce [UsedAreaStatusException]
+
+      check {
+        AreaStatus(uniqId, uniqSymbol, 3)
+        AreaStatus(uniqId, uniqSymbol(1), 3)
+      }
+
+      check {
+        AreaStatus(uniqId, uniqSymbol, 3)
+        AreaStatus(uniqId(1), uniqSymbol, 3)
+      }
     }
   }
 
-  test("存在しないシンボルを取得しようとすると例外が出る") {
-    new Fixture {      
-      evaluating {
-        AreaStatus(uniqSymbol)
-      } should produce [NoSuchAreaStatusException]
+  test("存在しない id や symbol を取得しようとすると例外が出る") {
+    new Fixture {
+      def check(func: => Unit) =
+        evaluating(func) should produce [NoSuchAreaStatusException]
+
+      check { AreaStatus(uniqId) }      
+      check { AreaStatus(uniqSymbol) }
     }
   }
 
   test("movePoint が 0 以下だと isMove は falase になる") {
     new Fixture {
-      AreaStatus(uniqSymbol,  3).isMove should be (true)
-      AreaStatus(uniqSymbol2, 0).isMove should be (false)
+      AreaStatus(uniqId,    uniqSymbol,    3).isMove should be (true)
+      AreaStatus(uniqId(1), uniqSymbol(1), 0).isMove should be (false)
     }
   }
 }

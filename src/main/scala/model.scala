@@ -12,19 +12,19 @@ trait Model extends NotNull {
   // その座標に既に誰かいる場合
   class UsedAreaPositionException(msg: String = "") extends Exception(msg)
 
-  // 既に使用している AreaStaus をもう一度作成しようとした場合
+  // 既に使用している AreaStatus をもう一度作成しようとした場合
   class UsedAreaStatusException(msg: String = "") extends Exception(msg)
   
-  // 存在しない AreaStatus を呼びだそうとした場合
+  // 存在しない AreaStatus を取得しようとした場合
   class NoSuchAreaStatusException(msg: String = "") extends Exception(msg)
 
   // basic area statuses
-  val FLAT    = AreaStatus('ft, 1)
-//  val GRASS   = AreaStatus('gs, 1)
-  val WOOD    = AreaStatus('wd, 2)
-  val HILL    = AreaStatus('hl, 3)
-  val MOUNT   = AreaStatus('mt, 0)
-//  val WATER   = AreaStatus('wt, 0)
+  val FLAT    = AreaStatus(1, 'ft, 1)
+//  val GRASS   = AreaStatus(2, 'gs, 1)
+  val WOOD    = AreaStatus(3, 'wd, 2)
+  val HILL    = AreaStatus(4, 'hl, 3)
+  val MOUNT   = AreaStatus(5, 'mt, 0)
+//  val WATER   = AreaStatus(6, 'wt, 0)
   
   val area: Area[AreaStatus]
   val characters = scala.collection.mutable.ArrayBuffer[Character]()
@@ -34,24 +34,35 @@ trait Model extends NotNull {
 
   object AreaStatus {
     private val values = scala.collection.mutable.Set[AreaStatus]()
-    def apply(symbol: Symbol): AreaStatus = {
-      values find {
-        _.symbol == symbol
+    private def find(check: AreaStatus => Boolean, e: String): AreaStatus = {
+      values.find {
+        check
       } match {
-        case Some(symbol) => symbol
-        case None => throw new NoSuchAreaStatusException(symbol.toString)
+        case Some(status) => status
+        case None => throw new NoSuchAreaStatusException(e)
       }
+    }
+    
+    def apply(symbol: Symbol): AreaStatus = {
+      find(_.symbol == symbol, "symbol: " + symbol)
+    }
+    def apply(id: Int): AreaStatus = {
+      find(_.id == id, "id: " + id)
     }
   }
 
   /**
    * @param symbol 制約はないが基本は小文字で二文字
    */
-  case class AreaStatus(symbol: Symbol, movePoint: Int) {
-    if ( AreaStatus.values.exists(_.symbol == symbol) ) {
-      throw new UsedAreaStatusException(symbol.toString)
-    }
-    AreaStatus.values += this
+  case class AreaStatus(id: Int, symbol: Symbol, movePoint: Int) {
+    if (
+      AreaStatus.values.exists {
+        status =>
+        status.symbol == symbol || status.id == id
+      }    
+    ) throw new UsedAreaStatusException(symbol.toString)
+
+    AreaStatus.values += this    
     
     val isMove: Boolean = (movePoint > 0)
   }
