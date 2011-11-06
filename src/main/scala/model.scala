@@ -37,9 +37,8 @@ trait Model extends NotNull {
     private def find(check: AreaStatus => Boolean, e: String): AreaStatus = {
       values.find {
         check
-      } match {
-        case Some(status) => status
-        case None => throw new NoSuchAreaStatusException(e)
+      } getOrElse {
+        throw new NoSuchAreaStatusException(e)
       }
     }
     
