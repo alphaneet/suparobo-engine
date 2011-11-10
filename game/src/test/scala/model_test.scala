@@ -587,7 +587,7 @@ class WeaponSuite extends FunSuite with ShouldMatchers {
       List( (0, 0), (4, 0), (0, 4), (4, 4) ).foreach {
         case (x, y) =>
         evaluating {
-          w1.attack(0, 0)
+          w1.attack(x, y)
         } should produce [OutsideRangeException]
       }
     }

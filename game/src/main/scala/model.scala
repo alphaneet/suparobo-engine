@@ -245,9 +245,10 @@ trait Model extends NotNull {
                                                        attackRangePoint)
     def attack(x: Int, y: Int)(implicit flags: Area[Boolean]) {
       val msg = "(%d, %d)".format(x, y)
+      val pos = Position(x, y)
       if (flags(x, y)) {
         thismodel.characters.find {
-          _.pos == Position(x, y)
+          _.pos == pos
         } match {
           case Some(target) => target.hitPoint -= attackPoint
           case None => throw new NotFoundCharacterException(msg)
