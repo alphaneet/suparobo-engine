@@ -1,8 +1,31 @@
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
 
+trait Helper {
+  this: Model =>
+    
+  val player = new Player
+  
+  def toInt(flags: Area[Boolean]) =
+    flags.data map { Util.boolean2Int(_) } toList
+
+  def createCharacter(x: Int, y: Int) = new Character(player, x, y)
+
+  def createCharacters(positions: Pair[Int, Int]*): List[Character] = {
+    positions.zipWithIndex map {
+      case (pos, index) => new Character(new Player, pos)
+    } toList
+  }
+  
+  def setArea(statuses: List[Symbol]) {
+    statuses.zipWithIndex.foreach {
+      case (status, i) => area(i) = AreaStatus(status)
+    }
+  }
+}
+
 class AreaStatusSuite extends FunSuite with ShouldMatchers {
-  trait Fixture extends Model {
+  trait Fixture extends Model with Helper {
     val area = new Area(10, 10)
     
     // 絶対存在しなさそうな id と symbol
@@ -13,7 +36,7 @@ class AreaStatusSuite extends FunSuite with ShouldMatchers {
     val uniqSymbol: Symbol = uniqSymbol(0)  
   }
 
-  test("AreaStatus は AreaStatus(id, symbol, movePoint) で作成し、" +
+  test("AreaStatus は AreaStatus(id, symbol, rangeCost) で作成し、" +
        "AreaStatus(id or symbol) で取得する")
   {
     new Fixture {
@@ -27,7 +50,7 @@ class AreaStatusSuite extends FunSuite with ShouldMatchers {
       findStatusById.id should be (uniqId)
       // findStatusById.symbol should be (uniqSymbol) は失敗する謎がある
       (findStatusById.symbol == uniqSymbol) should be (true)
-      findStatusById.movePoint should be (3)
+      findStatusById.rangeCost should be (3)
     }
   }
   
@@ -58,10 +81,26 @@ class AreaStatusSuite extends FunSuite with ShouldMatchers {
     }
   }
 
-  test("movePoint が 0 以下だと isMove は falase になる") {
+  test("rangeCost が 0 以下だと isMove は falase になる") {
     new Fixture {
       AreaStatus(uniqId,    uniqSymbol,    3).isMove should be (true)
       AreaStatus(uniqId(1), uniqSymbol(1), 0).isMove should be (false)
+    }
+  }
+
+  test("既に Character がいる座標には " +
+       "AreaStatus#isMove が false の地形は設置できない")
+  {
+    // Area[Boolean] とか Area[Int] の時には無視して、
+    // Area[AreaStatus] の時だけ AreaStatus#isMove を調べるのめんどうだから
+    // マップの読み込みの順番とか気をつけてこの状況を起きないようにして対処する（きりっ
+    pending
+    
+    new Fixture {
+      createCharacter(0, 0)
+      evaluating {
+        setArea(List('mt))
+      } should produce [UsedAreaPositionException]      
     }
   }
 }
@@ -121,7 +160,7 @@ class PositionSuite extends FunSuite with ShouldMatchers {
     }
   }  
 
-  test("Position#+= メソッドで x と y の座標を足すことが出来る") {
+  test("Position#+= は x と y の座標を足すことが出来る") {
     new Fixture {
       val pos = Position(1, 2)
       pos += Position(4, 5)
@@ -130,6 +169,13 @@ class PositionSuite extends FunSuite with ShouldMatchers {
       pos should be (Position(2, 3))
     }
   }
+
+  test("Position#index は thismodel.area を基準としたマップデータの index を取得") {
+    new Fixture {
+      val pos = Position(2, 4)
+      pos.index should be (42)
+    }
+  }       
 }
 
 class AreaSuite extends FunSuite with ShouldMatchers {
@@ -187,29 +233,8 @@ class AreaSuite extends FunSuite with ShouldMatchers {
 class CharacterSuite extends FunSuite with ShouldMatchers {
   import scala.collection.mutable.ArrayBuffer
   
-  class Fixture(width: Int, height: Int) extends Model {
+  class Fixture(width: Int, height: Int) extends Model with Helper {
     val area = new Area(width, height)
-    val player = new Player(1)
-    
-    def toInt(flags: Area[Boolean]) =
-      flags.data map { if (_) 1 else 0 } toList
-
-    def createCharacter(x: Int, y: Int) =
-      new Character(player, x, y)
-
-    def createCharacters(positions: Pair[Int, Int]*): List[Character] = {
-      positions.zipWithIndex map {
-        case (pos, index) =>
-        new Character(new Player(index), pos)
-      } toList
-    }
-
-    def setArea(statuses: List[Symbol]) {
-      statuses.zipWithIndex.foreach {
-        case (status, i) =>
-        area(i) = AreaStatus(status)
-      }
-    }    
   }
 
   test("Character を生成したら Model.characters と Player.characters に追加され、" +
@@ -250,13 +275,13 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
 
   test("Character#moveRange は移動できる範囲のリストを戻す。" +
        "Character#move はその値を参照して移動を行なう。" +     
-       "Area の範囲外は移動できない。") {
+       "Area の範囲外は移動できない") {
     
     // 検証データが手打なんであんまりチェックでけてない。
     // とりあえず真ん中とよつはし隅っこだけはチェックした。
     new Fixture(5, 5) {
       val c1 = createCharacter(2, 2)
-      c1.movePoint = 2
+      c1.moveRangePoint = 2
       implicit var flags: Area[Boolean] = c1.moveRange
 
       List(
@@ -289,7 +314,7 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
         case(x, y) =>
         evaluating {
           c1.move(x, y)
-        } should produce [OutsideMoveRangeException]
+        } should produce [OutsideRangeException]
       }
 
       c1.pos = Position(0, 0)
@@ -332,7 +357,7 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
     // ちょっと広めのも一度だけテストしてみる。
     new Fixture(7, 7) {
       val c1 = createCharacter(2, 2)
-      c1.movePoint = 5
+      c1.moveRangePoint = 5
       List(
         1, 1, 1, 1, 1, 1, 0,
         1, 1, 1, 1, 1, 1, 1,
@@ -351,11 +376,11 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
       val list = createCharacters((3, 3), (2, 2), (3, 5), (2, 5))
       val c1 :: c2 :: c3 :: c4 :: Nil = list
       List(2, 3, 4, 5).zipWithIndex foreach {
-        case (movePoint, index) =>
-        list(index).movePoint = movePoint
+        case (moveRangePoint, index) =>
+        list(index).moveRangePoint = moveRangePoint
       }
 
-      // Position(3, 3), movePoint(2)
+      // Position(3, 3), moveRangePoint(2)
       List(
         0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 1, 0, 0, 0, 0,
@@ -367,7 +392,7 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
         0, 0, 0, 0, 0, 0, 0, 0
       ) should be (toInt(c1.moveRange))
 
-      // Position(2, 2), movePoint(3)
+      // Position(2, 2), moveRangePoint(3)
       List(
         0, 1, 1, 1, 0, 0, 0, 0,
         1, 1, 1, 1, 1, 0, 0, 0,
@@ -379,7 +404,7 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
         0, 0, 0, 0, 0, 0, 0, 0
       ) should be (toInt(c2.moveRange))
 
-      // Position(3, 5), movePoint(4)
+      // Position(3, 5), moveRangePoint(4)
       List(
         0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,
@@ -391,7 +416,7 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
         0, 1, 1, 1, 1, 1, 0, 0
       ) should be (toInt(c3.moveRange))
 
-      // Position(2, 5), movePoint(5)
+      // Position(2, 5), moveRangePoint(5)
       List(
         0, 0, 0, 0, 0, 0, 0, 0,
         0, 1, 0, 0, 0, 0, 0, 0,
@@ -432,7 +457,7 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
         )
       }
       val c = createCharacter(2, 2)
-      c.movePoint = 3
+      c.moveRangePoint = 3
       List(
         0, 0, 1, 0, 0,
         0, 0, 1, 1, 0,
@@ -455,7 +480,7 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
         )
       }
       val c = createCharacter(2, 0)      
-      c.movePoint = 4
+      c.moveRangePoint = 4
       List(
         1, 1, 1, 1, 0,
         1, 1, 1, 1, 0,
@@ -478,7 +503,7 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
         )
       }
       val c = createCharacter(2, 2)      
-      c.movePoint = 100
+      c.moveRangePoint = 100
       List(
         1, 0, 0, 0, 1,
         1, 1, 0, 1, 1,
@@ -503,4 +528,68 @@ class CharacterSuite extends FunSuite with ShouldMatchers {
       } should produce [UsedAreaPositionException]
     }
   }    
+}
+
+class WeaponSuite extends FunSuite with ShouldMatchers {
+  class Fixture(width: Int, height: Int) extends Model with Helper {
+    val area = new Area(width, height)
+    val p1 = new Player
+    val p2 = new Player
+    val c1 = new Character(p1, 2, 2)
+    val c2 = new Character(p2, 3, 2)
+  }
+
+  test("Weapon#attackRange に必要な rangeCost は " +
+       "AreaStatus#rangeCost に影響されることなく等しく 1 であり、" +
+       "障害物で遮られることがない")
+  {   
+    new Fixture(5, 5) {
+      setArea {
+        List(
+          'mt, 'mt, 'mt, 'mt, 'mt,
+          'mt, 'mt, 'mt, 'hl, 'mt,
+          'mt, 'mt, 'ft, 'hl, 'mt,
+          'mt, 'hl, 'wd, 'wd, 'mt,
+          'mt, 'mt, 'mt, 'mt, 'mt
+        )
+      }
+
+      val w1 = new Weapon(c1)
+      w1.attackRangePoint = 3
+      List(
+        0, 1, 1, 1, 0,
+        1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1,
+        0, 1, 1, 1, 0
+      ) should be (toInt(w1.attackRange))        
+    }
+  }
+
+  test("attackRange に Character がいれば攻撃でき、" +
+       "存在しない座標に攻撃しようとすると例外を出す")
+  {
+    new Fixture(5, 5) {
+      val w1 = new Weapon(c1)
+      w1.attackPoint = 4
+      w1.attackRangePoint = 3
+
+      c1.hitPoint = 15
+      c2.hitPoint = 10
+      implicit val flags = w1.attackRange
+
+      w1.attack(2, 2)
+      c1.hitPoint should be (11)
+      
+      w1.attack(3, 2)
+      c2.hitPoint should be (6)
+
+      List( (0, 0), (4, 0), (0, 4), (4, 4) ).foreach {
+        case (x, y) =>
+        evaluating {
+          w1.attack(0, 0)
+        } should produce [OutsideRangeException]
+      }
+    }
+  }
 }
