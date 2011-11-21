@@ -17,8 +17,9 @@ class ConfigXML(elem: scala.xml.Node) {
       val text = (elem \ name).text      
       (default match {
         case _: Int => java.lang.Integer.decode(text)
+        case _: Float => text.toFloat        
         case _: String => text
-        case _: Symbol => Symbol(text)
+        case _: Symbol => Symbol(text)        
       }).asInstanceOf[T]
     } catch {
       case ex => {
@@ -94,7 +95,7 @@ object MapEditor extends EditorPApplet {
 class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   editor =>
 
-  import processing.core.{ PImage, PVector }
+  import processing.core.{ PImage, PVector, PConstants }
   import applet.config
   
   val CANVAS_LEFT = 240
@@ -104,11 +105,15 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
 //  val CANVAS_BOTTOM = 
 //  val CANVAS_RIGHT =
 
+  val SCALE_VALUE = config('scale_value, 100.0f)
+  val MIN_SCALE   = config('min_scale, 50.0f)
+  val MAX_SCALE   = config('max_scale, 200.0f)
+
   val MIN_COLUMN = config('min_column, 5)
   val MAX_COLUMN = config('max_column, 50)
   val MIN_ROW    = config('min_row, 5)
   val MAX_ROW    = config('max_row, 50)
-
+  
   private var _column = config('init_column, 20)  
   private var _row    = config('init_row, 20)
 
@@ -116,14 +121,14 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   def row    = _row
   
   def column_=(column: Int) {
-    _column = rangeOfInt(column, MIN_COLUMN, MAX_COLUMN)
+    _column = rangeOfNumber(column, MIN_COLUMN, MAX_COLUMN)
   }
   def row_=(row: Int) {
-    _row = rangeOfInt(row, MIN_ROW, MAX_ROW)
+    _row = rangeOfNumber(row, MIN_ROW, MAX_ROW)
   }
   
   // TK: こういうの標準でありませんか？あったら教えてぴょ
-  def rangeOfInt(v: Int, min: Int, max: Int): Int = 
+  def rangeOfNumber[T <% scala.runtime.ScalaNumberProxy[T]](v: T, min: T, max: T): T =
     if (v < min) min
     else if (v > max) max
     else v
@@ -160,10 +165,13 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       val config = new ConfigXML(xml)
       val symbol = config('symbol, 'None)
       val color = config('color, 0xFFFFFFF)
-      val image = gg.createLabel(
-        symbol.name, divWidth, divHeight,
-        15, 0x444444, color
-      )
+      val image = gg.createAndDrawPImage(divWidth, divHeight) {
+        g =>
+        val c = gg.rgb(color)
+        g.stroke(60)
+        g.fill(c._1, c._2, c._3)
+        g.rect(0, 0, divWidth - 1, divHeight - 1)
+      }
       Status(config('id, 0), symbol, color, image)
     }
   }
@@ -172,7 +180,7 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   
   object focus {
     var pos = new PVector(30, 30)
-    var status = statuses(0)
+    var status = statuses.head
     def draw() {
       applet.stroke(255, 60, 60)
       applet.strokeWeight(3)
@@ -180,6 +188,13 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       applet.rect(pos.x, pos.y, 60, 60)
     }
   }
+  
+  private var _scaleValue = SCALE_VALUE
+  def scaleValue = _scaleValue
+  def scaleValue_=(value: Float) {
+    _scaleValue = rangeOfNumber(value, MIN_SCALE, MAX_SCALE)
+  }
+  
 
   // initialize
   {
@@ -205,7 +220,7 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     
     val size = 20
     val (top, left) = (CANVAS_TOP - size, CANVAS_LEFT - size)
-    val createZoomButton = createButtonByBasicColor(size, size, 15)
+    val createToolButton = createButtonByBasicColor(size, size, 15)
 
     List(
       (left + size,       top, 0x25C0, -10, 0),
@@ -219,12 +234,28 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       (left, top + (size * 4), 0x25bc, 0,  10)
     ) foreach {
       case (x, y, arrow, addColumn, addRow) =>
-      createZoomButton(x, y, arrow.toChar) {
+      createToolButton(x, y, arrow.toChar) {
         editor.column += addColumn
         editor.row    += addRow
         updateInfo()
       }
     }
+
+    List(
+      (left + CANVAS_WIDTH - size, top, "-", -20),
+      (left + CANVAS_WIDTH,        top, "+",  20)
+    ) foreach {
+      case (x, y, ch, value) =>
+      createToolButton(x, y, ch) {
+        editor.scaleValue += value
+      }
+    }
+
+    applet.addMouseWheelListener(new java.awt.event.MouseWheelListener() {
+      def mouseWheelMoved(e: java.awt.event.MouseWheelEvent) {
+        editor.scaleValue += e.getWheelRotation()
+      }
+    })
     
     new Image(690, 10, createInfoLabel("x"))
     updateInfo()
@@ -283,6 +314,10 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     applet.stroke(0)
     applet.fill(255, 100, 100)
 
+    val scale = editor.scaleValue / SCALE_VALUE
+    val scaleWidth  = editor.divWidth  * scale
+    val scaleHeight = editor.divHeight * scale
+    
     {
       val size = 20
       val (top, left) = (CANVAS_TOP - size, CANVAS_LEFT - size)
@@ -296,13 +331,14 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
 
     buffer.zipWithIndex foreach {
       case (status, index) =>
+                
       val x = index % MAX_COLUMN
       val y = index / MAX_COLUMN
 
       if (x < editor.column && y < editor.row) {
-        val posX = CANVAS_LEFT + (x * editor.divWidth)
-        val posY = CANVAS_TOP  + (y * editor.divHeight)
-        applet.image(status.image, posX, posY)
+        val posX = CANVAS_LEFT + (x * scaleWidth)
+        val posY = CANVAS_TOP  + (y * scaleHeight)
+        applet.image(status.image, posX, posY, scaleWidth, scaleHeight)
       }
     }
     
@@ -317,12 +353,12 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       help.draw()
     }
 
-    if (applet.isMousePressed) {
+    if (applet.isMousePressed && applet.mouseButton == PConstants.LEFT) {
       val diffX = (applet.mouseX - CANVAS_LEFT)
       val diffY = (applet.mouseY - CANVAS_TOP)
 
-      val x = diffX / divWidth
-      val y = diffY / divHeight
+      val x = (diffX / scaleWidth).toInt
+      val y = (diffY / scaleHeight).toInt
       if (diffX > 0 && x < editor.column &&  diffY > 0 && y < editor.row) {
         buffer(x + y * MAX_COLUMN) = focus.status
       }

@@ -2,6 +2,10 @@
   <width>800</width>
   <height>600</height>
 
+  <scale_value>100.0f</scale_value>
+  <min_scale>50.0f</min_scale>
+  <max_scale>200.0f</max_scale>
+  
   <init_column>10</init_column>  
   <init_row>10</init_row>
   
