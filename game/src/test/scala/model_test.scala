@@ -12,8 +12,8 @@ trait Helper {
   def createCharacter(x: Int, y: Int) = new Character(player, x, y)
 
   def createCharacters(positions: Pair[Int, Int]*): List[Character] = {
-    positions.zipWithIndex map {
-      case (pos, index) => new Character(new Player, pos)
+    positions map {
+      new Character(new Player, _)
     } toList
   }
   

@@ -1,4 +1,4 @@
-resolvers += "github Maven Repository" at "https://github.com/alphaneet-debu/maven/raw/master"
+resolvers += "processing Maven Repository" at "https://github.com/alphaneet-debu/maven/raw/master"
 
 libraryDependencies ++= Seq(
   "processing" %% "core" % "1.5.1",

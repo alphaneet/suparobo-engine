@@ -1,0 +1,13 @@
+<config>
+  <width>800</width>
+  <height>600</height>
+
+  <init_column>10</init_column>  
+  <init_row>10</init_row>
+  
+  <min_column>5</min_column>
+  <max_column>80</max_column>
+
+  <min_row>5</min_row>
+  <max_row>80</max_row>
+</config>
