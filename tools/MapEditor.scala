@@ -128,10 +128,13 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   }
   
   // TK: こういうの標準でありませんか？あったら教えてぴょ
-  def rangeOfNumber[T <% scala.runtime.ScalaNumberProxy[T]](v: T, min: T, max: T): T =
-    if (v < min) min
-    else if (v > max) max
+  def rangeOfNumber[T: Ordering](v: T, min: T, max: T): T = {
+    val ord = implicitly[Ordering[T]]
+
+    if (ord.lt(v, min)) min
+    else if (ord.gt(v, max)) max
     else v
+  }
     
   val buttonManager = new ButtonManagerEx
   val help = new ButtonManagerEx {
