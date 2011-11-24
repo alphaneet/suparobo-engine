@@ -92,7 +92,10 @@ object MapEditor extends EditorPApplet {
   def createEditorScene = new MapEditorScene(this)
 }
 
-class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
+class MapEditorScene(applet: EditorPApplet)
+extends EditorScene(applet)
+with Util
+{
   editor =>
 
   import processing.core.{ PImage, PVector, PConstants }
@@ -102,8 +105,8 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   val CANVAS_TOP = 50
   val CANVAS_WIDTH = 510
   val CANVAS_HEIGHT = 510
-//  val CANVAS_BOTTOM = 
-//  val CANVAS_RIGHT =
+  val CANVAS_BOTTOM = CANVAS_TOP + CANVAS_HEIGHT
+  val CANVAS_RIGHT = CANVAS_LEFT + CANVAS_WIDTH
 
   val SCALE_VALUE = config('scale_value, 100.0f)
   val MIN_SCALE   = config('min_scale, 50.0f)
@@ -113,6 +116,30 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   val MAX_COLUMN = config('max_column, 50)
   val MIN_ROW    = config('min_row, 5)
   val MAX_ROW    = config('max_row, 50)
+
+  private var _canvasX = CANVAS_LEFT
+  private var _canvasY = CANVAS_TOP
+  var isCanvasDragged = false
+
+  def canvasX = _canvasX
+  def canvasY = _canvasY
+
+  def canvasX_=(x: Int) {
+    val w = realCanvasWidth
+    _canvasX = rangeOfNumber(
+      x,
+      math.min(CANVAS_LEFT, CANVAS_RIGHT - w),
+      math.max(CANVAS_LEFT, CANVAS_LEFT + (CANVAS_WIDTH - w))
+    )
+  }
+  def canvasY_=(y: Int) {
+    val h = realCanvasHeight
+    _canvasY = rangeOfNumber(
+      y,
+      math.min(CANVAS_TOP, CANVAS_BOTTOM - h),
+      math.max(CANVAS_TOP, CANVAS_TOP + (CANVAS_HEIGHT - h))
+    )
+  }
   
   private var _column = config('init_column, 20)  
   private var _row    = config('init_row, 20)
@@ -150,6 +177,9 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
 
   var divWidth  = 30
   var divHeight = 30
+
+  def realCanvasWidth: Int = ( column * divWidth * (scaleValue / SCALE_VALUE) ).toInt
+  def realCanvasHeight: Int = ( row * divHeight * (scaleValue / SCALE_VALUE) ).toInt
 
   def createInfoLabel(text: String) =
     gg.createLabel(text, text.length * 20, 25, 20, 0x333333)
@@ -197,7 +227,15 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   def scaleValue_=(value: Float) {
     _scaleValue = rangeOfNumber(value, MIN_SCALE, MAX_SCALE)
   }
-  
+
+  val background = gg.createAndDrawPImage(applet.width, applet.height) {
+    g =>
+    g.noStroke()
+    g.rect(0, 0, applet.width, CANVAS_TOP)
+    g.rect(0, 0, CANVAS_LEFT, applet.height)
+    g.rect(0, CANVAS_BOTTOM, applet.width,  applet.height - CANVAS_BOTTOM)    
+    g.rect(CANVAS_RIGHT, 0, applet.width - CANVAS_RIGHT,  applet.height)
+  }
 
   // initialize
   {
@@ -311,27 +349,14 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   override def draw() {
     import applet.{ rect }
     
-    applet.background(255)
-
-    applet.strokeWeight(1)
-    applet.stroke(0)
-    applet.fill(255, 100, 100)
-
     val scale = editor.scaleValue / SCALE_VALUE
     val scaleWidth  = editor.divWidth  * scale
     val scaleHeight = editor.divHeight * scale
-    
-    {
-      val size = 20
-      val (top, left) = (CANVAS_TOP - size, CANVAS_LEFT - size)
-      val (width, height) = (CANVAS_WIDTH + (size << 1), CANVAS_HEIGHT + (size << 1))
-      rect(left, top,  width, size)
-      rect(left, top,  size,  height)
-      
-      rect(left, 560,  width, size)
-      rect(750,  top,  size,  height)
-    }
 
+    applet.noStroke()
+    applet.fill(255)
+    applet.rect(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT)
+    
     buffer.zipWithIndex foreach {
       case (status, index) =>
                 
@@ -339,10 +364,27 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       val y = index / MAX_COLUMN
 
       if (x < editor.column && y < editor.row) {
-        val posX = CANVAS_LEFT + (x * scaleWidth)
-        val posY = CANVAS_TOP  + (y * scaleHeight)
+        val posX = canvasX + (x * scaleWidth)
+        val posY = canvasY + (y * scaleHeight)
         applet.image(status.image, posX, posY, scaleWidth, scaleHeight)
       }
+    }
+    
+    applet.image(background, 0, 0)
+   
+    {
+      val size = 20
+      val (top, left) = (CANVAS_TOP - size, CANVAS_LEFT - size)
+      val (width, height) = (CANVAS_WIDTH + (size << 1), CANVAS_HEIGHT + (size << 1))
+        
+      applet.noStroke()
+      applet.fill(90)
+        
+      rect(left, top,  width, size)
+      rect(left, top,  size,  height)
+      
+      rect(left, 560,  width, size)
+      rect(750,  top,  size,  height)
     }
     
     if (!help.isView) buttonManager.checkMouse()
@@ -357,8 +399,8 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     }
 
     if (applet.isMousePressed && applet.mouseButton == PConstants.LEFT) {
-      val diffX = (applet.mouseX - CANVAS_LEFT)
-      val diffY = (applet.mouseY - CANVAS_TOP)
+      val diffX = (applet.mouseX - canvasX)
+      val diffY = (applet.mouseY - canvasY)
 
       val x = (diffX / scaleWidth).toInt
       val y = (diffY / scaleHeight).toInt
@@ -366,5 +408,18 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
         buffer(x + y * MAX_COLUMN) = focus.status
       }
     }
+
+    if (isCanvasDragged) {
+      canvasX += (applet.mouseX - applet.pmouseX)
+      canvasY += (applet.mouseY - applet.pmouseY)
+    }
   }
+  
+  override def mousePressed() =
+    if (
+      applet.mouseButton == PConstants.RIGHT &&
+      util.isMouseInside(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT)
+    ) isCanvasDragged = true
+
+  override def mouseReleased() = isCanvasDragged = false
 }

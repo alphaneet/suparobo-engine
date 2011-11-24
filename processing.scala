@@ -32,6 +32,9 @@ class PApplet extends processing.core.PApplet {
     _isMousePressed = false
     scene.mouseReleased()
   }
+  override def mouseDragged() {
+    scene.mouseDragged()
+  }
 
   def main(args: Array[String]) = runSketch()
 }
@@ -43,6 +46,19 @@ trait Scene extends NotNull {
   def keyTyped() {}
   def mousePressed() {}
   def mouseReleased() {}
+  def mouseDragged() {}
+}
+
+trait Util {
+  this: { val applet: PApplet } =>
+
+  import applet.{ mouseX, mouseY }
+  
+  object util {
+    def isMouseInside(x: Int, y: Int, w: Int, h: Int): Boolean = {
+      mouseX > x && mouseX < x + w && mouseY > y && mouseY < y + h
+    }
+  }
 }
 
 object ButtonStatus extends Enumeration {
