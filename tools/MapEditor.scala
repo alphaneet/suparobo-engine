@@ -1,4 +1,4 @@
-class ConfigXML(elem: scala.xml.Node) {
+class ConfigXML(val elem: scala.xml.NodeSeq) {
   def this(filename: String) = this(
     try {
       scala.xml.XML.loadFile(filename)      
@@ -13,17 +13,20 @@ class ConfigXML(elem: scala.xml.Node) {
     apply(symbol.name, default)
     
   def apply[T](name: String, default: T): T = {
+    if (name == "None") return default
+    
     try {
       val text = (elem \ name).text      
       (default match {
-        case _: Int => java.lang.Integer.decode(text)
-        case _: Float => text.toFloat        
+        case _: Int    => java.lang.Integer.decode(text)
+        case _: Float  => text.toFloat        
         case _: String => text
-        case _: Symbol => Symbol(text)        
+        case _: Symbol => Symbol(text)
+        case _: Char   => text.head
       }).asInstanceOf[T]
     } catch {
       case ex => {
-        Console.err.println("use default: " + default + " --- " + ex)
+        Console.err.println(name + " use default: " + default + " --- " + ex)
         default
       }
     }
@@ -101,12 +104,17 @@ with Util
   import processing.core.{ PImage, PVector, PConstants }
   import applet.config
   
-  val CANVAS_LEFT = 240
-  val CANVAS_TOP = 50
-  val CANVAS_WIDTH = 510
+  val CANVAS_LEFT   = 240
+  val CANVAS_TOP    = 50
+  val CANVAS_WIDTH  = 510
   val CANVAS_HEIGHT = 510
   val CANVAS_BOTTOM = CANVAS_TOP + CANVAS_HEIGHT
-  val CANVAS_RIGHT = CANVAS_LEFT + CANVAS_WIDTH
+  val CANVAS_RIGHT  = CANVAS_LEFT + CANVAS_WIDTH
+
+  val MINIMAP_LEFT   = 10
+  val MINIMAP_TOP    = 380
+  val MINIMAP_WIDTH  = 200
+  val MINIMAP_HEIGHT = 200
 
   val SCALE_VALUE = config('scale_value, 100.0f)
   val MIN_SCALE   = config('min_scale, 50.0f)
@@ -164,11 +172,94 @@ with Util
   }
     
   val buttonManager = new ButtonManagerEx
-  val help = new ButtonManagerEx {
-    var isView = false
+  
+  object keys {
+    val values = scala.collection.mutable.ArrayBuffer[Key]()  
+    val config = new ConfigXML(applet.config.elem \ "keys")
+    case class Key(symbol: Symbol, default: Char, text: String)(_event: => Unit) {
+      val event = () => {        
+        _event
+        editor.updateInfo()
+      }
+      val char = config(symbol, default)
+      values += this
+    }
 
+    def setFocus(symbol: Symbol) {
+      editor.statuses find {
+        _.symbol == symbol
+      } foreach { _.focus() }
+    }
+    
+    Key('flat,  'q', ": 平地を選択（移動力 -1）") { setFocus('ft) }
+    Key('wood,  'w', ": 森を選択（移動力 -2）")   { setFocus('wd) }
+    Key('hill,  'a', ": 丘を選択（移動力 -3）")   { setFocus('hl) }
+    Key('mount, 's', ": 山を選択（移動不可能）")  { setFocus('mt) }
+    
+    Key('zoom_in,  'z', ": キャンバスの拡大") { editor.scaleValue += 20 }
+    Key('zoom_out, 'x', ": キャンバスの縮小") { editor.scaleValue -= 20 }
+    
+    Key('left,   'c', ": キャンバスの左端に移動") {
+      canvasX = CANVAS_RIGHT + realCanvasWidth
+    }
+    Key('right,  'b', ": キャンバスの右端に移動") {
+      canvasX = CANVAS_LEFT - realCanvasWidth
+    }
+    Key('top,    'f', ": キャンバスの上端に移動") {
+      canvasY = CANVAS_BOTTOM + realCanvasHeight
+    }
+    Key('bottom, 'v', ": キャンバスの下端に移動") {
+      canvasY = CANVAS_TOP - realCanvasHeight
+    }
+    
+    Key('width_plus,   't', ": キャンバスの幅を増やす") { editor.column += 1 }
+    Key('width_minus,  'r', ": キャンバスの幅を減らす") { editor.column -= 1 }
+    Key('height_plus,  'd', ": キャンバスの高さを増やす")  { editor.row += 1 }
+    Key('height_minus, 'e', ": キャンバスの高さを減らす")  { editor.row -= 1 }
+
+    Key('save, 'o', ": 保存画面を開く")     { saveBinary() }
+    Key('load, 'l', ": 読み込み画面を開く") { loadBinary() }
+    
+    Key('help, 'h', ": ヘルプの開閉") {
+      if (help.isOpen) help.close() else help.open()
+    }
+    
+    Key('None, ' ', "左クリックでマップチップの配置") {}
+    Key('None, ' ', "右ドラッグでキャンバスの移動") {}
+    Key('None, ' ', "スクロールで拡大／縮小") {}
+  }
+  
+  val help = new ButtonManagerEx {
+    private var _isOpen = false
+    def isOpen  = _isOpen
+
+    def open()  { _isOpen = true }
+    def close() { _isOpen = false }
+
+    createButtonByBasicColor(120, 30, 20)(340, 500, "閉じる") { close }
+
+    val labels = keys.values map {
+      case key =>
+      gg.createLabel(
+        key.char + key.text,
+        250, 40, 15, 60, -1, PConstants.LEFT
+      )
+    }    
+    
     override def draw() {
-      super.draw()
+      applet.strokeWeight(2)
+      applet.stroke(30)
+      applet.fill(230, 230, 255, 220)
+      applet.rect(100, 50, 600, 500)
+
+      labels.zipWithIndex foreach {
+        case (label, index) =>
+        val x = index / 10
+        val y = index % 10
+        applet.image(label, 140 + x * 300, 60 + y * 40)
+      }
+        
+      super.draw()      
     }
   }
 
@@ -177,9 +268,16 @@ with Util
 
   var divWidth  = 30
   var divHeight = 30
+  
+  private var _scaleValue = SCALE_VALUE
+  def scaleValue = _scaleValue
+  def scaleValue_=(value: Float) {
+    _scaleValue = rangeOfNumber(value, MIN_SCALE, MAX_SCALE)
+  }
+  def scale = scaleValue / SCALE_VALUE  
 
-  def realCanvasWidth: Int = ( column * divWidth * (scaleValue / SCALE_VALUE) ).toInt
-  def realCanvasHeight: Int = ( row * divHeight * (scaleValue / SCALE_VALUE) ).toInt
+  def realCanvasWidth: Int = ( column * divWidth * scale ).toInt
+  def realCanvasHeight: Int = ( row * divHeight * scale ).toInt
 
   def createInfoLabel(text: String) =
     gg.createLabel(text, text.length * 20, 25, 20, 0x333333)
@@ -191,13 +289,21 @@ with Util
     }
   }
   
-  case class Status(id: Int, symbol: Symbol, color: Int, image: PImage) extends NotNull
+  abstract case class Status(id: Int, symbol: Symbol, color: Int, image: PImage)
+                extends NotNull { def focus(): Unit }
+  
   val statuses: Seq[Status] = {
-    (scala.xml.XML.loadFile("AreaStatuses.xml") \ "status") map {
-      xml =>
-      val config = new ConfigXML(xml)
-      val symbol = config('symbol, 'None)
-      val color = config('color, 0xFFFFFFF)
+    val (sx, sy) = (30, 30)
+    val (ex, ey) = (120, 120)
+    
+    List(
+      (1, 'ft, 0x99FF99, sx, sy),
+      (3, 'wd, 0x009900, ex, sy),
+      (4, 'hl, 0x999933, sx, ey),
+      (5, 'mt, 0x999999, ex, ey)
+    ) map {
+      case (id, symbol, color, x, y) =>
+
       val image = gg.createAndDrawPImage(divWidth, divHeight) {
         g =>
         val c = gg.rgb(color)
@@ -205,7 +311,21 @@ with Util
         g.fill(c._1, c._2, c._3)
         g.rect(0, 0, divWidth - 1, divHeight - 1)
       }
-      Status(config('id, 0), symbol, color, image)
+
+      val status = new Status(id, symbol, color, image) {
+        def focus() {
+          editor.focus.status = this
+          editor.focus.pos = new PVector(x, y)
+        }
+      }
+        
+      buttonManager.createEasyButton(0x444444, 0, color)(
+        60, 60, 18)(x, y, symbol.toString)
+      {
+        status.focus()
+      }
+      
+      status
     }
   }
 
@@ -220,13 +340,7 @@ with Util
       applet.noFill()
       applet.rect(pos.x, pos.y, 60, 60)
     }
-  }
-  
-  private var _scaleValue = SCALE_VALUE
-  def scaleValue = _scaleValue
-  def scaleValue_=(value: Float) {
-    _scaleValue = rangeOfNumber(value, MIN_SCALE, MAX_SCALE)
-  }
+  }  
 
   val background = gg.createAndDrawPImage(applet.width, applet.height) {
     g =>
@@ -239,25 +353,13 @@ with Util
 
   // initialize
   {
-    import buttonManager.{ createEasyButton, createButtonByBasicColor }
+    import buttonManager.createButtonByBasicColor
 
-    val (sx, sy) = (30, 30)
-    val (ex, ey) = (120, 120)
+    val createMenuButton = createButtonByBasicColor(150, 30, 12)
 
-    val createStatusButton = createEasyButton(0x444444, 0, _: Int)(60, 60, 18)_
-    List( (sx, sy), (ex, sy), (sx, ey), (ex, ey) ).zipWithIndex foreach {
-      case((x, y), index) =>
-      val status = statuses(index)
-      createStatusButton(status.color)(x, y, status.symbol.toString) {
-        focus.status = status
-        focus.pos = new PVector(x, y)
-      }
-    }
-
-    val createMenuButton = createButtonByBasicColor(150, 40, 15)
-
-    createMenuButton(30, 210, "Save") { saveBinary(applet.selectOutput()) }
-    createMenuButton(30, 260, "Load") { loadBinary(applet.selectInput()) }
+    createMenuButton(30, 210, "Save") { saveBinary() }
+    createMenuButton(30, 255, "Load") { loadBinary() }
+    createMenuButton(30, 300, "Help") { help.open()  }
     
     val size = 20
     val (top, left) = (CANVAS_TOP - size, CANVAS_LEFT - size)
@@ -311,7 +413,7 @@ with Util
     (x < editor.column && y < editor.row)    
   }
   
-  def saveBinary(filename: String) {
+  def saveBinary(filename: String = applet.selectOutput()) {
     if (filename == null) return
     
     val size = Array[Byte](column.toByte, row.toByte)
@@ -322,7 +424,7 @@ with Util
     applet.saveBytes(filename, size ++ data)
   }
 
-  def loadBinary(filename: String) {    
+  def loadBinary(filename: String = applet.selectInput()) {    
     if (filename == null) return
 
     val bytes = applet.loadBytes(filename)
@@ -349,13 +451,25 @@ with Util
   override def draw() {
     import applet.{ rect }
     
-    val scale = editor.scaleValue / SCALE_VALUE
-    val scaleWidth  = editor.divWidth  * scale
-    val scaleHeight = editor.divHeight * scale
+    case class MiniMap(x: Float, y: Float, color: Int)
+    val miniMapBuffer = scala.collection.mutable.ArrayBuffer[MiniMap]()    
+    val miniMapSize = math.max(editor.column, editor.row)
+    
+    val miniMapChipWidth = MINIMAP_WIDTH.toFloat / miniMapSize
+    val miniMapChipHeight = MINIMAP_HEIGHT.toFloat / miniMapSize
+    
+    val miniMapWidth = editor.column * miniMapChipWidth
+    val miniMapHeight = editor.row * miniMapChipHeight
+    
+    val scaleWidth  = editor.divWidth  * editor.scale
+    val scaleHeight = editor.divHeight * editor.scale
+
+    val realCanvasWidth = editor.realCanvasWidth
+    val realCanvasHeight = editor.realCanvasHeight
 
     applet.noStroke()
     applet.fill(255)
-    applet.rect(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT)
+    applet.rect(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT)    
     
     buffer.zipWithIndex foreach {
       case (status, index) =>
@@ -366,12 +480,59 @@ with Util
       if (x < editor.column && y < editor.row) {
         val posX = canvasX + (x * scaleWidth)
         val posY = canvasY + (y * scaleHeight)
-        applet.image(status.image, posX, posY, scaleWidth, scaleHeight)
+        if (
+          posX + scaleWidth > CANVAS_LEFT &&
+          posX < CANVAS_RIGHT &&
+          posY + scaleHeight > CANVAS_TOP &&
+          posY < CANVAS_BOTTOM
+        ) {
+          applet.image(status.image, posX, posY, scaleWidth, scaleHeight)
+        }
+
+        miniMapBuffer += MiniMap(
+          x * miniMapChipWidth,
+          y * miniMapChipHeight,
+          status.color
+        )
       }
     }
     
     applet.image(background, 0, 0)
-   
+    applet.noStroke()
+    miniMapBuffer foreach {
+      miniMap =>
+      val c = gg.rgb(miniMap.color)
+      applet.fill(c._1, c._2, c._3)
+      applet.rect(
+        MINIMAP_LEFT + miniMap.x,
+        MINIMAP_TOP + miniMap.y,
+        miniMapChipWidth,
+        miniMapChipHeight
+      )
+    }
+
+    {      
+      applet.stroke(255, 100, 100)
+      applet.strokeWeight(1)
+      applet.noFill()
+
+      val scaleWidth = (CANVAS_LEFT - canvasX).toFloat / realCanvasWidth
+      val scaleHeight = (CANVAS_TOP - canvasY).toFloat / realCanvasHeight
+
+      val x = miniMapWidth * scaleWidth
+      val y = miniMapHeight * scaleHeight
+
+      val w = miniMapWidth * (CANVAS_WIDTH.toFloat / realCanvasWidth)
+      val h = miniMapHeight * (CANVAS_HEIGHT.toFloat / realCanvasHeight)
+
+      applet.rect(
+        MINIMAP_LEFT + math.max(x, 0),
+        MINIMAP_TOP + math.max(y, 0),
+        math.min(w, MINIMAP_WIDTH),
+        math.min(h, MINIMAP_HEIGHT)
+      )
+    }
+    
     {
       val size = 20
       val (top, left) = (CANVAS_TOP - size, CANVAS_LEFT - size)
@@ -387,18 +548,22 @@ with Util
       rect(750,  top,  size,  height)
     }
     
-    if (!help.isView) buttonManager.checkMouse()
+    if (!help.isOpen) buttonManager.checkMouse()
     buttonManager.draw()
 
     images.drawAll()
     focus.draw()
   
-    if (help.isView) {
+    if (help.isOpen) {
       help.checkMouse()
       help.draw()
     }
-
-    if (applet.isMousePressed && applet.mouseButton == PConstants.LEFT) {
+    
+    if (
+      applet.isMousePressed &&
+      applet.mouseButton == PConstants.LEFT &&
+      !help.isOpen
+    ) {
       val diffX = (applet.mouseX - canvasX)
       val diffY = (applet.mouseY - canvasY)
 
@@ -418,8 +583,14 @@ with Util
   override def mousePressed() =
     if (
       applet.mouseButton == PConstants.RIGHT &&
-      util.isMouseInside(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT)
+      util.isMouseInside(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT) &&
+      !help.isOpen
     ) isCanvasDragged = true
 
   override def mouseReleased() = isCanvasDragged = false
+
+  override def keyTyped() = keys.values find {
+    key =>
+    key.char.toUpper == applet.key || key.char.toLower == applet.key
+  } foreach { _.event() }
 }

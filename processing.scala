@@ -52,11 +52,18 @@ trait Scene extends NotNull {
 trait Util {
   this: { val applet: PApplet } =>
 
+  import processing.core.PGraphics     
   import applet.{ mouseX, mouseY }
   
   object util {
     def isMouseInside(x: Int, y: Int, w: Int, h: Int): Boolean = {
       mouseX > x && mouseX < x + w && mouseY > y && mouseY < y + h
+    }
+
+    def drawPGraphics(g: PGraphics)(draw: PGraphics => Unit) {
+      g.beginDraw()
+      draw(g)
+      g.endDraw()
     }
   }
 }
@@ -160,7 +167,7 @@ class ButtonManager(applet: PApplet) extends NotNull {
 
 class GraphicsGenerator(applet: processing.core.PApplet) extends NotNull {
   import processing.core.{ PGraphics, PImage }
-  import processing.core.PConstants.{ JAVA2D, ARGB, HSB, CENTER }
+  import processing.core.PConstants.{ JAVA2D, ARGB, HSB, CENTER, LEFT, RIGHT }
   
   def rgb(c: Int): (Float, Float, Float) = {
     val g = applet.g
@@ -173,7 +180,7 @@ class GraphicsGenerator(applet: processing.core.PApplet) extends NotNull {
   }
 
   def createLabel(text: String, width: Int, height: Int, size: Int,
-                  front: Int, back: Int = -1): PImage = {
+                  front: Int, back: Int = -1, align: Int = CENTER): PImage = {
     createAndDrawPImage(width + 1, height + 1) {
       g =>
 
@@ -186,11 +193,14 @@ class GraphicsGenerator(applet: processing.core.PApplet) extends NotNull {
 
       val (red, green, blue) = rgb(front)
       g.fill(red, green, blue)
-      //g.textSize(size)
       g.textFont(applet.createFont("", size))
-      g.textAlign(CENTER)
+      g.textAlign(align)
       val des = g.textDescent.toInt
-      g.text(text, (width >> 1), (height >> 1) + des + (des >> 1) )
+      val x: Int = align match {
+        case LEFT   => 2
+        case CENTER => (width >> 1)
+      }
+      g.text(text, x, (height >> 1) + des + (des >> 1) )
     }
   }
   

@@ -14,4 +14,29 @@
 
   <min_row>5</min_row>
   <max_row>80</max_row>
+
+  <keys>
+    <flat>q</flat>
+    <wood>w</wood>
+    <hill>a</hill>
+    <mount>s</mount>
+    
+    <zoom_in>z</zoom_in>
+    <zoom_out>x</zoom_out>
+
+    <left>c</left>
+    <right>b</right>
+    <top>f</top>
+    <bottom>v</bottom>
+
+    <width_plus>t</width_plus>
+    <width_minus>r</width_minus>
+    <height_plus>d</height_plus>
+    <height_minus>e</height_minus>
+
+    <save>o</save>
+    <load>l</load>
+
+    <help>h</help>    
+  </keys>
 </config>
