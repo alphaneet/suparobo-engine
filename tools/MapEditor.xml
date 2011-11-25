@@ -29,10 +29,10 @@
     <top>f</top>
     <bottom>v</bottom>
 
-    <width_plus>t</width_plus>
-    <width_minus>r</width_minus>
-    <height_plus>d</height_plus>
-    <height_minus>e</height_minus>
+    <column_plus>t</column_plus>
+    <column_minus>r</column_minus>
+    <row_plus>d</row_plus>
+    <row_minus>e</row_minus>
 
     <save>o</save>
     <load>l</load>

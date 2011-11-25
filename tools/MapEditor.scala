@@ -176,9 +176,9 @@ with Util
   object keys {
     val values = scala.collection.mutable.ArrayBuffer[Key]()  
     val config = new ConfigXML(applet.config.elem \ "keys")
-    case class Key(symbol: Symbol, default: Char, text: String)(_event: => Unit) {
-      val event = () => {        
-        _event
+    case class Key(symbol: Symbol, default: Char, text: String)(_action: => Unit) {
+      val action = () => {        
+        _action
         editor.updateInfo()
       }
       val char = config(symbol, default)
@@ -212,10 +212,10 @@ with Util
       canvasY = CANVAS_TOP - realCanvasHeight
     }
     
-    Key('width_plus,   't', ": キャンバスの幅を増やす") { editor.column += 1 }
-    Key('width_minus,  'r', ": キャンバスの幅を減らす") { editor.column -= 1 }
-    Key('height_plus,  'd', ": キャンバスの高さを増やす")  { editor.row += 1 }
-    Key('height_minus, 'e', ": キャンバスの高さを減らす")  { editor.row -= 1 }
+    Key('column_plus,  't', ": キャンバスの幅を増やす") { editor.column += 1 }
+    Key('column_minus, 'r', ": キャンバスの幅を減らす") { editor.column -= 1 }
+    Key('row_plus,     'd', ": キャンバスの高さを増やす")  { editor.row += 1 }
+    Key('row_minus,    'e', ": キャンバスの高さを減らす")  { editor.row -= 1 }
 
     Key('save, 'o', ": 保存画面を開く")     { saveBinary() }
     Key('load, 'l', ": 読み込み画面を開く") { loadBinary() }
@@ -236,15 +236,18 @@ with Util
     def open()  { _isOpen = true }
     def close() { _isOpen = false }
 
-    createButtonByBasicColor(120, 30, 20)(340, 500, "閉じる") { close }
+    createButtonByBasicColor(120, 30, 20)(340, 500, "閉じる") { close() }
 
     val labels = keys.values map {
       case key =>
+      val char = if (key.symbol == 'None) "" else key.char
       gg.createLabel(
-        key.char + key.text,
-        250, 40, 15, 60, -1, PConstants.LEFT
+        char + key.text, 250, 40,
+        size  = 15,
+        front = 60,
+        align = PConstants.LEFT
       )
-    }    
+    }
     
     override def draw() {
       applet.strokeWeight(2)
@@ -592,5 +595,5 @@ with Util
   override def keyTyped() = keys.values find {
     key =>
     key.char.toUpper == applet.key || key.char.toLower == applet.key
-  } foreach { _.event() }
+  } foreach { _.action() }
 }
