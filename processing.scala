@@ -49,22 +49,29 @@ trait Scene extends NotNull {
   def mouseDragged() {}
 }
 
-trait Util {
+trait MyUtil {
   this: { val applet: PApplet } =>
 
   import processing.core.PGraphics     
   import applet.{ mouseX, mouseY }
   
-  object util {
-    def isMouseInside(x: Int, y: Int, w: Int, h: Int): Boolean = {
-      mouseX > x && mouseX < x + w && mouseY > y && mouseY < y + h
-    }
+  def isMouseInside(x: Int, y: Int, w: Int, h: Int): Boolean = {
+    mouseX > x && mouseX < x + w && mouseY > y && mouseY < y + h
+  }
 
-    def drawPGraphics(g: PGraphics)(draw: PGraphics => Unit) {
-      g.beginDraw()
-      draw(g)
-      g.endDraw()
-    }
+  def drawPGraphics(g: PGraphics)(draw: PGraphics => Unit) {
+    g.beginDraw()
+    draw(g)
+    g.endDraw()
+  }
+  
+  // TK: こういうの標準でありませんか？あったら教えてぴょ
+  def rangeOfNumber[T: Ordering](v: T, min: T, max: T): T = {
+    val ord = implicitly[Ordering[T]]
+
+    if (ord.lt(v, min)) min
+    else if (ord.gt(v, max)) max
+    else v
   }
 }
 
@@ -180,18 +187,18 @@ class GraphicsGenerator(applet: processing.core.PApplet) extends NotNull {
   }
 
   def createLabel(text: String, width: Int, height: Int, size: Int,
-                  front: Int, back: Int = -1, align: Int = CENTER): PImage = {
+                  frontColor: Int, backColor: Int = -1, align: Int = CENTER): PImage = {
     createAndDrawPImage(width + 1, height + 1) {
       g =>
 
       g.smooth
 
-      if (back >= 0) {
-        val (red, green, blue) = rgb(back)
+      if (backColor >= 0) {
+        val (red, green, blue) = rgb(backColor)
         g.background(red, green, blue)
       }
 
-      val (red, green, blue) = rgb(front)
+      val (red, green, blue) = rgb(frontColor)
       g.fill(red, green, blue)
       g.textFont(applet.createFont("", size))
       g.textAlign(align)

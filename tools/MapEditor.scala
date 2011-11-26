@@ -1,104 +1,8 @@
-class ConfigXML(val elem: scala.xml.NodeSeq) {
-  def this(filename: String) = this(
-    try {
-      scala.xml.XML.loadFile(filename)      
-    } catch {
-      case ex =>
-      Console.err.println(ex)
-      <dummy></dummy>
-    }
-  )
-  
-  def apply[T](symbol: Symbol, default: T): T =
-    apply(symbol.name, default)
-    
-  def apply[T](name: String, default: T): T = {
-    if (name == "None") return default
-    
-    try {
-      val text = (elem \ name).text      
-      (default match {
-        case _: Int    => java.lang.Integer.decode(text)
-        case _: Float  => text.toFloat        
-        case _: String => text
-        case _: Symbol => Symbol(text)
-        case _: Char   => text.head
-      }).asInstanceOf[T]
-    } catch {
-      case ex => {
-        Console.err.println(name + " use default: " + default + " --- " + ex)
-        default
-      }
-    }
-  }
-}
-
-trait EditorPApplet extends PApplet {
-  val clazzName = {
-    val tmp = getClass.getName
-    if (tmp.endsWith("$")) tmp.init else tmp
-  }
-
-  val config = new ConfigXML(clazzName + ".xml")
-  def createEditorScene: Scene
-
-  override def setup() {    
-    size(config('width, 800), config('height, 600))
-    frameRate(24)
-    scene = createEditorScene
-  }
-}
-
-class EditorScene(val applet: EditorPApplet) extends Scene {
-  editor =>
-
-  import processing.core.{ PImage, PVector }
-  
-  val gg = new GraphicsGenerator(applet)
-  val images= new scala.collection.mutable.ArrayBuffer[Image] {
-    def drawAll(): Unit = foreach { _.draw() }
-    def update(v: Image, image: PImage) {
-      find(_ == v) foreach { _.image = Option(image) }
-    }
-  }
-  
-  class ButtonManagerEx extends ButtonManager(applet) {
-    def createEasyButton
-    (releasedFront: Int, pressedFront: Int, back: Int)
-    (w: Int, h: Int, size: Int)
-    (x: Int, y: Int, anyText: Any)
-    (action: => Unit)
-    {
-      val text = anyText.toString
-      val labels = (
-        gg.createLabel(text, w, h, size, releasedFront, back),
-        gg.createLabel(text, w, h, size, releasedFront, back),
-        gg.createLabel(text, w, h, size, pressedFront,  back)
-      )
-      register(labels, new processing.core.PVector(x, y))(action)
-    }
-
-    val createButtonByBasicColor = createEasyButton(0xFFFFFFF, 0xAAAAAA, 0x333333)_
-  }
-
-  class Image(var pos: PVector = new PVector(), _image: PImage = null) {
-    def this(x: Int, y: Int, _image: PImage = null) = this(new PVector(x, y), _image)
-    
-    var image = Option(_image)
-    
-    editor.images += this
-    def draw(): Unit = image foreach { applet.image(_, pos.x, pos.y) }
-  }
-}
-
 object MapEditor extends EditorPApplet {
   def createEditorScene = new MapEditorScene(this)
 }
 
-class MapEditorScene(applet: EditorPApplet)
-extends EditorScene(applet)
-with Util
-{
+class MapEditorScene(val applet: EditorPApplet) extends EditorScene {
   editor =>
 
   import processing.core.{ PImage, PVector, PConstants }
@@ -160,16 +64,7 @@ with Util
   }
   def row_=(row: Int) {
     _row = rangeOfNumber(row, MIN_ROW, MAX_ROW)
-  }
-  
-  // TK: こういうの標準でありませんか？あったら教えてぴょ
-  def rangeOfNumber[T: Ordering](v: T, min: T, max: T): T = {
-    val ord = implicitly[Ordering[T]]
-
-    if (ord.lt(v, min)) min
-    else if (ord.gt(v, max)) max
-    else v
-  }
+  }  
     
   val buttonManager = new ButtonManagerEx
   
@@ -242,17 +137,19 @@ with Util
       case key =>
       val char = if (key.symbol == 'None) "" else key.char
       gg.createLabel(
-        char + key.text, 250, 40,
-        size  = 15,
-        front = 60,
-        align = PConstants.LEFT
+        text   = char + key.text,
+        width  = 250,
+        height = 40,
+        size   = 15,
+        frontColor = 0x333333,
+        align  = PConstants.LEFT
       )
     }
     
     override def draw() {
       applet.strokeWeight(2)
       applet.stroke(30)
-      applet.fill(230, 230, 255, 220)
+      applet.fill(230, 230, 255, 240)
       applet.rect(100, 50, 600, 500)
 
       labels.zipWithIndex foreach {
@@ -586,12 +483,13 @@ with Util
   override def mousePressed() =
     if (
       applet.mouseButton == PConstants.RIGHT &&
-      util.isMouseInside(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT) &&
+      isMouseInside(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT) &&
       !help.isOpen
     ) isCanvasDragged = true
 
   override def mouseReleased() = isCanvasDragged = false
 
+  
   override def keyTyped() = keys.values find {
     key =>
     key.char.toUpper == applet.key || key.char.toLower == applet.key
