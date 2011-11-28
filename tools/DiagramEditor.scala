@@ -1,8 +1,10 @@
+package com.github.alphaneet.suparobo_engine.tools
+
 object DiagramEditor extends EditorPApplet {
   def createEditorScene = new DiagramEditorScene(this)
 }
 
-class DiagramEditorScene(val applet: EditorPApplet) extends EditorScene {  
+class DiagramEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   editor =>
     
   val buttonManager = new ButtonManagerEx

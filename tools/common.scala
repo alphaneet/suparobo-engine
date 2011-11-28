@@ -1,3 +1,12 @@
+package com.github.alphaneet.suparobo_engine.tools
+import com.github.alphaneet.processing.{
+  PApplet,
+  Scene,
+  MyUtil,
+  ButtonManager,
+  GraphicsGenerator
+}
+
 class ConfigXML(val elem: scala.xml.NodeSeq) {
   def this(filename: String) = this(
     try {
@@ -35,23 +44,26 @@ class ConfigXML(val elem: scala.xml.NodeSeq) {
 
 trait EditorPApplet extends PApplet {
   val clazzName = {
-    val tmp = getClass.getName
+    val tmp = getClass.getSimpleName
     if (tmp.endsWith("$")) tmp.init else tmp
   }
 
   val config = new ConfigXML(clazzName + ".xml")
+  val screenSize = new Dimension(config('width, 800), config('height, 600))
+  
   def createEditorScene: Scene
-
-  override def setup() {    
-    size(config('width, 800), config('height, 600))
+  
+  override def setup() {
+    size(processing.core.PConstants.P2D)
     frameRate(24)
-    scene = createEditorScene
+    title = clazzName    
+    createEditorScene
   }
 }
 
-trait EditorScene extends Scene with MyUtil {
-  editor: { val applet: EditorPApplet }  =>
-
+class EditorScene(val applet: EditorPApplet) extends Scene(applet) with MyUtil {
+  editor =>
+    
   import processing.core.{ PImage, PVector }
   
   val gg = new GraphicsGenerator(applet)

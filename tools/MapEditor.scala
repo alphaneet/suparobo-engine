@@ -1,8 +1,10 @@
+package com.github.alphaneet.suparobo_engine.tools
+
 object MapEditor extends EditorPApplet {
   def createEditorScene = new MapEditorScene(this)
 }
 
-class MapEditorScene(val applet: EditorPApplet) extends EditorScene {
+class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   editor =>
 
   import processing.core.{ PImage, PVector, PConstants }

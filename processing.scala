@@ -1,17 +1,44 @@
-class PApplet extends processing.core.PApplet {
-  var scene = new Scene {}
+package com.github.alphaneet.processing
+
+abstract class PApplet extends processing.core.PApplet {
+  applet =>
+
+  type Dimension = java.awt.Dimension
+    
+  implicit def pair2Dimension(p: (Int, Int)): Dimension = new Dimension(p._1, p._2)
+
+  private var _swing: Option[Swing] = None
+  def swing = _swing
+  private[processing] def swing_=(swing: Swing) {
+    _swing foreach {
+      old =>
+      applet.remove(old)
+      old.removeAll
+    }
+    _swing = Option(swing)
+    _swing foreach { applet add }
+  }
   
-  private var _isKeyPressed = false
+  private var _scene: Scene = new Scene(applet) { override def register() {} }
+  def scene = _scene
+  private[processing] def scene_=(nextScene: Scene) {
+    swing   = null
+    _scene  = nextScene
+  }  
+  
+  val screenSize: java.awt.Dimension
+
+  def size(irenderer: String) {
+    size(screenSize.width, screenSize.height, irenderer)
+  }
+  
+  def title = if (frame != null) frame.getTitle else ""
+  def title_=(title: String) = if (frame != null) frame.setTitle(title)
+  
+  private var _isKeyPressed   = false
   private var _isMousePressed = false
 
-  lazy val isApplet = (frame == null)
-
-  def title = if (!isApplet) "" else frame.getTitle
-  def title_=(title: String) = if (!isApplet) frame.setTitle(title)
-
-  override def draw() = scene.draw()
-
-  def isKeyPressed = _isKeyPressed
+  def isKeyPressed   = _isKeyPressed
   def isMousePressed = _isMousePressed
 
   override def keyPressed() {
@@ -35,11 +62,44 @@ class PApplet extends processing.core.PApplet {
   override def mouseDragged() {
     scene.mouseDragged()
   }
+  
+  override def draw() = scene.draw()
 
-  def main(args: Array[String]) = runSketch()
+  override def paint(screen: java.awt.Graphics) {
+    super.paint(screen)
+    swing foreach { _.paint(screen) }
+  }
+  
+  protected def createFrame() {
+    import javax.swing.JFrame
+    
+    val frame = new JFrame
+    
+    frame.getContentPane.add(applet)
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+    frame.setResizable(false)
+    
+    applet.frame = frame
+    applet.setPreferredSize(screenSize)
+    
+    frame.pack()
+    frame.setLocationRelativeTo(null)
+    
+    applet.init()
+    while (applet.defaultSize && !applet.finished)Thread.sleep(5)
+   
+    frame.setVisible(true)
+  }
+  
+  def main(args: Array[String]) =
+    javax.swing.SwingUtilities.invokeLater(
+      new Runnable() { def run() = createFrame() }
+    )
 }
-
-trait Scene extends NotNull {
+ 
+class Scene(applet: PApplet) extends NotNull {
+  register()
+  def register(): Unit = applet.scene = this
   def draw() {}
   def keyPressed() {}
   def keyReleased() {}
@@ -73,6 +133,46 @@ trait MyUtil {
     else if (ord.gt(v, max)) max
     else v
   }
+}
+
+class Swing(applet: PApplet) extends javax.swing.JPanel(null) {
+  setOpaque(false)
+  setSize(applet.screenSize)  
+  setPreferredSize(applet.screenSize)
+  applet.swing = this
+}
+
+class SwingManager(applet: PApplet) extends NotNull {  
+  val swing = new Swing(applet)
+  
+  trait Component extends javax.swing.JComponent {
+    import java.awt.Graphics
+    
+    swing add this
+    
+    override def paintComponent(g: Graphics) = super.paintComponent(g)
+    override def paint(g: Graphics) = paintComponent(g)
+  }
+}
+
+class TextManager(applet: PApplet) extends SwingManager(applet) {
+  class TextField extends javax.swing.JTextField with Component {
+    textField =>
+      
+    import java.awt.event.{ ActionListener, ActionEvent }
+    
+    def enter(action: TextField => Unit): TextField = {
+      this addActionListener new ActionListener() {
+        override def actionPerformed(e: ActionEvent) = action(textField)
+      }
+      this
+    }
+  }
+  
+  def registerTextField(x: Int, y: Int, width: Int, height: Int): TextField = 
+    new TextField {      
+      setBounds(x, y, width, height)
+    }
 }
 
 object ButtonStatus extends Enumeration {
