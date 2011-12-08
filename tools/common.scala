@@ -66,9 +66,9 @@ class EditorScene(val applet: EditorPApplet) extends Scene(applet) with MyUtil {
     
   import processing.core.{ PImage, PVector }
   
-  val gg = new GraphicsGenerator(applet)
-  val images= new scala.collection.mutable.ArrayBuffer[Image] {
-    def drawAll(): Unit = foreach { _.draw() }
+  implicit val gg = new GraphicsGenerator(applet)
+  val images = new scala.collection.mutable.ArrayBuffer[Image] {
+    def draw(): Unit = foreach { _.draw() }
     def update(v: Image, image: PImage) {
       find(_ == v) foreach { _.image = Option(image) }
     }
@@ -82,23 +82,21 @@ class EditorScene(val applet: EditorPApplet) extends Scene(applet) with MyUtil {
     (action: => Unit)
     {
       val txt = text.toString
-      val labels = (
+      val labels = List(
         gg.createLabel(txt, width, height, size, releasedFront, back),
         gg.createLabel(txt, width, height, size, releasedFront, back),
         gg.createLabel(txt, width, height, size, pressedFront,  back)
       )
-      register(labels, new processing.core.PVector(x, y))(action)
+      register(labels, x, y).action { action }
     }
 
     val createButtonByBasicColor = createEasyButton(0xFFFFFFF, 0xAAAAAA, 0x333333)_
   }
 
-  class Image(var pos: PVector = new PVector(), _image: PImage = null) {
-    def this(x: Int, y: Int, _image: PImage = null) = this(new PVector(x, y), _image)
-    
+  class Image(x: Int, y: Int, _image: PImage = null) {    
     var image = Option(_image)
     
     editor.images += this
-    def draw(): Unit = image foreach { applet.image(_, pos.x, pos.y) }
+    def draw(): Unit = image foreach { applet.image(_, x, y) }
   }
 }

@@ -13,7 +13,7 @@ abstract class PApplet extends processing.core.PApplet {
     _swing foreach {
       old =>
       applet.remove(old)
-      old.removeAll
+      old.removeAll()
     }
     _swing = Option(swing)
     _swing foreach { applet add }
@@ -34,6 +34,15 @@ abstract class PApplet extends processing.core.PApplet {
   
   def title = if (frame != null) frame.getTitle else ""
   def title_=(title: String) = if (frame != null) frame.setTitle(title)
+
+  var mouseWheelRotation = 0
+  
+  addMouseWheelListener(new java.awt.event.MouseWheelListener() {
+    def mouseWheelMoved(e: java.awt.event.MouseWheelEvent) {
+      mouseWheelRotation = e.getWheelRotation()
+      scene.mouseWheelMoved()
+    }
+  })
   
   private var _isKeyPressed   = false
   private var _isMousePressed = false
@@ -52,6 +61,7 @@ abstract class PApplet extends processing.core.PApplet {
   override def keyTyped() = scene.keyTyped()
 
   override def mousePressed() {
+    if (!isFocusOwner) requestFocus()    
     _isMousePressed = true
     scene.mousePressed()
   }
@@ -62,7 +72,7 @@ abstract class PApplet extends processing.core.PApplet {
   override def mouseDragged() {
     scene.mouseDragged()
   }
-  
+
   override def draw() = scene.draw()
 
   override def paint(screen: java.awt.Graphics) {
@@ -86,7 +96,7 @@ abstract class PApplet extends processing.core.PApplet {
     frame.setLocationRelativeTo(null)
     
     applet.init()
-    while (applet.defaultSize && !applet.finished)Thread.sleep(5)
+    while (applet.defaultSize && !applet.finished) Thread.sleep(5)
    
     frame.setVisible(true)
   }
@@ -107,6 +117,7 @@ class Scene(applet: PApplet) extends NotNull {
   def mousePressed() {}
   def mouseReleased() {}
   def mouseDragged() {}
+  def mouseWheelMoved() {}
 }
 
 trait MyUtil {
@@ -114,10 +125,19 @@ trait MyUtil {
 
   import processing.core.PGraphics     
   import applet.{ mouseX, mouseY }
-  
-  def isMouseInside(x: Int, y: Int, w: Int, h: Int): Boolean = {
-    mouseX > x && mouseX < x + w && mouseY > y && mouseY < y + h
+
+  // TK: めんどいから四角形同士の動作を確認してない^o^ たぶんあってる(ｷﾘｯ
+  def contains
+  (x1: Int, y1: Int, w1: Int, h1: Int)
+  (x2: Int, y2: Int, w2: Int, h2: Int) : Boolean = {
+    x2 + w2 > x1 && x2 < x1 + w1 && y2 + h2 > y1 && y2 < y1 + h1
   }
+
+  def contains(x: Int, y: Int, w: Int, h: Int, px: Int, py: Int): Boolean =
+    contains(x, y, w, h)(px, py, 0, 0)
+  
+  def mouseContains(x: Int, y: Int, w: Int, h: Int): Boolean =
+    contains(x, y, w, h)(mouseX, mouseY, 0, 0)
 
   def drawPGraphics(g: PGraphics)(draw: PGraphics => Unit) {
     g.beginDraw()
@@ -175,56 +195,95 @@ class TextManager(applet: PApplet) extends SwingManager(applet) {
     }
 }
 
-object ButtonStatus extends Enumeration {
-  type ButtonStatus = Value
-  val UP, OVER, DOWN, DISABLED = Value
+object ButtonStatus {
+  case class Value(id: Int) extends NotNull
+
+  val UP       = Value(0)
+  val OVER     = Value(1)
+  val DOWN     = Value(2)
+  val DISABLED = Value(3)  
 }
 
-object ButtonManager {
-  private var isLock = false
+object ButtonManager {  
+  private var isLock = false  
 }
 
-class ButtonManager(applet: PApplet) extends NotNull {
+class ButtonManager(val applet: PApplet) extends NotNull with MyUtil {
   buttonManager =>
     
   import processing.core.{ PImage, PVector, PConstants }
   
-  class Button(
-    _images: Tuple4[PImage, PImage, PImage, PImage],
-    val pos: PVector,
-    val action: () => Unit
-  ) extends NotNull {
+  protected val buttons = scala.collection.mutable.ArrayBuffer[Button]()
+
+  class Button(_images: List[PImage], var x: Int, var y: Int) extends NotNull {
+    val images: List[PImage] = {
+      _images match {
+        case List(_, _, _, _) => _images
+        case List(up, over, down) => List(up, over, down, up)
+        case List(one) => List(one, one, one, one)
+        case _ => throw new java.lang.IllegalArgumentException("_images.size should be 1, 3, 4")
+      }
+    }
+
+    var fixedWidth  = 0
+    var fixedHeight = 0
     
-    val images = List(_images._1, _images._2, _images._3, _images._4)
-    var status = ButtonStatus.UP
+    def image  = images(status.id)
+    def width  = if (fixedWidth  == 0) image.width  else fixedWidth
+    def height = if (fixedHeight == 0) image.height else fixedHeight
+    
+    var action: Option[Button => Unit] = None
+    def action(f: Button => Unit): Button = {
+      action = Option(f)
+      this
+    }
+    def action(f: => Unit): Button = {
+      action = Option ( (b: Button) => { f } )
+      this
+    }
+    
+    object status {
+      var value  = ButtonStatus.UP
+      def id     = value.id
+      
+      def isUp   = value == ButtonStatus.UP
+      def isOver = value == ButtonStatus.OVER
+      def isDown = value == ButtonStatus.DOWN
+      def isDisabled = value == ButtonStatus.DISABLED
 
+      def up()   { value = ButtonStatus.UP }
+      def over() { value = ButtonStatus.OVER }
+      def down() { value = ButtonStatus.DOWN }
+      def disabled() { value = ButtonStatus.DISABLED }
+    }
+        
     def checkMouse: Boolean = {
-      if (status == ButtonStatus.DISABLED) return false
-
-      val isOver = buttonManager.isOverMouse(images(status.id), this)
+      if (status.isDisabled) return false
+      
+      val isOver = buttonManager.isOverMouse(this)
       val result = isOver && buttonManager.mouseClicked(this)
 
       if (mousePressed) {
         if (isOver && !ButtonManager.isLock) {
-          status = ButtonStatus.DOWN
+          status.down()
           ButtonManager.isLock = true
         }
       } else {
-        status = if (isOver) ButtonStatus.OVER else ButtonStatus.UP
+        if (isOver) status.over() else status.up()
         ButtonManager.isLock = false
       }
       result
     }
 
-    def image() = applet.image(images(status.id), pos.x, pos.y)
-  }
-  private val buttons = scala.collection.mutable.ArrayBuffer[Button]()
+    def draw() = applet.image(image, x, y)
+    def draw(width: Int, height: Int) = applet.image(image, x, y, width, height)
+  }  
 
-  def isOverMouse(image: PImage, button: Button): Boolean =
-    applet.mouseX > button.pos.x &&
-    applet.mouseX < button.pos.x + image.width &&
-    applet.mouseY > button.pos.y &&
-    applet.mouseY < button.pos.y + image.height
+  def isOverMouse(button: Button): Boolean =
+    applet.mouseX > button.x &&
+    applet.mouseX < button.x + button.width &&
+    applet.mouseY > button.y &&
+    applet.mouseY < button.y + button.height
 
   /**
    * override 例
@@ -244,19 +303,10 @@ class ButtonManager(applet: PApplet) extends NotNull {
    *   - 押して離した時に true
    */
   def mouseClicked(button: Button): Boolean =
-    !mousePressed && button.status == ButtonStatus.DOWN
+    !mousePressed && button.status.isDown
 
-  def register(image: PImage, pos: PVector)(action: => Unit): Button =
-    register((image, image, image), pos)(action)
-
-  def register(images: Triple[PImage, PImage, PImage],
-               pos: PVector)(action: => Unit): Button =
-    register((images._1, images._2, images._3,
-              applet.createImage(0, 0, PConstants.ARGB)), pos)(action)
-  
-  def register(images: Tuple4[PImage, PImage, PImage, PImage],
-               pos: PVector)(action: => Unit): Button = {
-    val button = new Button(images, pos, action _)
+  def register(images: List[PImage], x: Int, y: Int): Button = {
+    val button = new Button(images, x, y)
     buttons += button
     button
   }
@@ -266,10 +316,201 @@ class ButtonManager(applet: PApplet) extends NotNull {
     button
   }
 
-  def checkMouse() =
-    buttons withFilter(_.checkMouse) foreach(_.action())
+  def checkMouse(button: Button) {
+    if (button.checkMouse) button.action.foreach { _(button) }
+  }
+  
+  def checkMouse() {
+    buttonManager.buttons foreach { checkMouse }
+  }
+  
+  def draw() = buttons.foreach(_.draw())
+}
 
-  def draw() = buttons.foreach(_.image())
+class ListManager(applet: PApplet) extends ButtonManager(applet) {
+  listManager =>
+ 
+  import processing.core.PImage
+
+  var x = 0
+  var y = 0
+  var width  = 0
+  var height = 0
+  
+  var scrollWidth = 0
+  def isScrollActive = scrollWidth != 0
+
+  def fullWidth = width + scrollWidth
+  
+  def top    = y
+  def left   = x
+  def bottom = y + height
+  def right  = x + fullWidth
+
+  var focus: Option[Button] = None
+  def focus_=(button: Button) { focus = Option(button) }
+
+  private var _scroll = 0
+  def scroll = _scroll
+  def scroll_=(scroll: Int) {
+    _scroll = rangeOfNumber(scroll, 0, overScroll)
+  }
+
+  private var upperOverScroll = 0
+  private var underOverScroll = 0
+  private def overScroll = upperOverScroll + underOverScroll
+
+  var scrollBarButton:  Option[Button] = None
+  def scrollBarButton_=(images: List[PImage]) {
+    scrollBarButton = Option(
+      new Button(images, 0, 0)
+    )
+  }
+  
+  var scrollUpButton:   Option[Button] = None
+  def scrollUpButton_=(images: List[PImage]) {
+    scrollUpButton = Option(
+      new Button(images, 0, 0).action { listManager.scroll -= 1 }
+    ) 
+  }
+  
+  var scrollDownButton: Option[Button] = None
+  def scrollDownButton_=(images: List[PImage]) {
+    scrollDownButton = Option(
+      new Button(images, 0, 0).action { listManager.scroll += 1 }
+    )
+  }
+
+  def scrollButtons = List(scrollUpButton, scrollDownButton, scrollBarButton)
+
+  var scrollBackground: Option[PImage] = None
+  def scrollBackground_=(image: PImage) { scrollBackground = Option(image) }
+  def scrollBackground_=(color: Int)(implicit gg: GraphicsGenerator) {
+    val c = gg.rgb(color)
+    scrollBackground = gg.createAndDrawPImage(scrollWidth, height) { _.background(c._1, c._2, c._3) }
+  }
+  
+  private var _background: Option[PImage] = None
+  def background = _background
+  def background_=(image: PImage) {
+    _background = Option(image)
+    _background foreach {
+      bg =>
+      width  = bg.width
+      height = bg.height
+    }    
+  }
+  def background(width: Int, height: Int, color: Int)(implicit gg: GraphicsGenerator) {
+    val c = gg.rgb(color)
+    background = gg.createAndDrawPImage(width, height) { _.background(c._1, c._2, c._3) }
+  }
+  
+  def mouseContains: Boolean = mouseContains(x, y, fullWidth, height)
+
+  override def draw() {
+    background foreach { applet.image(_, x, y) }
+    
+    listManager.upperOverScroll = 0    
+    listManager.underOverScroll = 0
+    var nextY = y
+
+    buttons.zipWithIndex foreach {
+      case (button, index) =>
+        
+      val bottomY = nextY + button.height
+      if (index < listManager.scroll) {
+        button.status.disabled()
+        listManager.upperOverScroll += 1
+      } else if (bottomY - y > height) {
+        button.status.disabled()        
+        listManager.underOverScroll += 1
+      } else {
+        if ( button.status.isDisabled ) button.status.up()
+        button.x = x
+        button.y = nextY
+        nextY = bottomY
+
+        button.draw()
+      }
+    }
+
+    if (listManager.isScrollActive) {
+      val scrollX = listManager.x + listManager.width
+      def drawScrollButton(button: Button, y: Int, height: Int) {
+        button.x = scrollX
+        button.y = y
+        button.draw(listManager.scrollWidth, height)
+      }
+      
+      scrollBackground foreach {
+        applet.image(_, scrollX, listManager.y, listManager.scrollWidth, listManager.height)
+      }
+
+      var scrollBarTop    = listManager.y
+      var scrollBarHeight = listManager.height
+      
+      scrollUpButton foreach {
+        button =>
+        scrollBarTop    += button.height
+        scrollBarHeight -= button.height
+        
+        drawScrollButton(button, listManager.y, button.height)
+      }
+      
+      scrollDownButton foreach {
+        button =>
+        scrollBarHeight -= button.height
+        drawScrollButton(button, listManager.bottom - button.height, button.height)  
+      }
+      
+      scrollBarButton foreach {
+        button =>
+        val size = listManager.buttons.size
+        val rate = listManager.overScroll.toFloat / size
+        val height = if (size == 0) {
+          scrollBarHeight
+        } else {
+          ( scrollBarHeight - (scrollBarHeight * rate) ).toInt          
+        }
+        var y = ( (scrollBarHeight.toFloat / size) * listManager.scroll ).toInt
+        
+        button.fixedHeight = height
+        drawScrollButton(button, scrollBarTop + y, height)
+      }
+    }
+  }
+
+  override def checkMouse() {
+    scrollButtons foreach { _.foreach(checkMouse) }
+    super.checkMouse()
+
+    scrollBarButton foreach {
+      button =>
+      if (button.status.isDown) {
+        val y = applet.mouseY - listManager.y
+        if (y > 0 && y < listManager.height) {
+          val rate = listManager.height.toFloat / listManager.buttons.size
+          val centerY = ( y - (button.height >> 1) ).toFloat
+          listManager.scroll = ( centerY / rate).toInt
+        }
+      }
+    }
+  }
+  
+  def remove() {
+    focus foreach {
+      button =>
+      val index = buttons.indexOf(button)
+      unregister(button)
+      focus = if (buttons.isEmpty) {
+        None
+      } else {
+        val nextIndex = rangeOfNumber(index, 0, buttons.size - 1)
+        Option(buttons(nextIndex))
+      }
+      if (listManager.underOverScroll == 0) listManager.scroll -= 1
+    }
+  }  
 }
 
 class GraphicsGenerator(applet: processing.core.PApplet) extends NotNull {
@@ -288,18 +529,18 @@ class GraphicsGenerator(applet: processing.core.PApplet) extends NotNull {
 
   def createLabel(text: String, width: Int, height: Int, size: Int,
                   frontColor: Int, backColor: Int = -1, align: Int = CENTER): PImage = {
-    createAndDrawPImage(width + 1, height + 1) {
+    createAndDrawPImage(width, height) {
       g =>
 
       g.smooth
 
       if (backColor >= 0) {
-        val (red, green, blue) = rgb(backColor)
-        g.background(red, green, blue)
+        val c = rgb(backColor)
+        g.background(c._1, c._2, c._3)
       }
 
-      val (red, green, blue) = rgb(frontColor)
-      g.fill(red, green, blue)
+      val c = rgb(frontColor)
+      g.fill(c._1, c._2, c._3)
       g.textFont(applet.createFont("", size))
       g.textAlign(align)
       val des = g.textDescent.toInt
@@ -316,7 +557,9 @@ class GraphicsGenerator(applet: processing.core.PApplet) extends NotNull {
     val halfW = width >> 1
     val halfH = height >> 1
     val weight = 2
-        
+
+    // TK: 紛らわしいので、いつか +1 を消したい。
+    // +1 しないと右と下の stroke が欠けてしまうっぽいから付けてるっぽい。
     createAndDrawPImage(width + 1, height + 1) {
       g =>
         
@@ -340,7 +583,7 @@ class GraphicsGenerator(applet: processing.core.PApplet) extends NotNull {
       }
     }
   }  
-
+  
   def createAndDrawPImage(width: Int, height: Int)(draw: PGraphics => Unit): PImage = {
     val g: PGraphics = applet.createGraphics(width, height, JAVA2D)
     

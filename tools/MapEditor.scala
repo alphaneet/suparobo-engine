@@ -161,7 +161,7 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
         applet.image(label, 140 + x * 300, 60 + y * 40)
       }
         
-      super.draw()      
+      super.draw()
     }
   }
 
@@ -296,17 +296,11 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       }
     }
 
-    applet.addMouseWheelListener(new java.awt.event.MouseWheelListener() {
-      def mouseWheelMoved(e: java.awt.event.MouseWheelEvent) {
-        editor.scaleValue += e.getWheelRotation()
-      }
-    })
-    
     new Image(690, 10, createInfoLabel("x"))
     updateInfo()
   }
 
-  def isInsideInBuffer(index: Int): Boolean = {
+  def bufferContains(index: Int): Boolean = {
     if (index < 0) false
     
     val x = index % MAX_COLUMN
@@ -320,7 +314,7 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     
     val size = Array[Byte](column.toByte, row.toByte)
     val data: Array[Byte] = buffer.zipWithIndex withFilter {
-      case(_, index) => isInsideInBuffer(index)
+      case(_, index) => bufferContains(index)
     } map(_._1.id.toByte)
     
     applet.saveBytes(filename, size ++ data)
@@ -342,7 +336,7 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       val y = dataIndex / editor.column
       val bufferIndex = (x + y * MAX_COLUMN)
         
-      if (isInsideInBuffer(bufferIndex)) {
+      if (bufferContains(bufferIndex)) {
         buffer(bufferIndex) = statuses find(_.id == id) getOrElse(statuses.head)
       }
     }
@@ -453,7 +447,7 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     if (!help.isOpen) buttonManager.checkMouse()
     buttonManager.draw()
 
-    images.drawAll()
+    images.draw()
     focus.draw()
   
     if (help.isOpen) {
@@ -485,12 +479,13 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   override def mousePressed() =
     if (
       applet.mouseButton == PConstants.RIGHT &&
-      isMouseInside(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT) &&
+      mouseContains(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT) &&
       !help.isOpen
     ) isCanvasDragged = true
 
   override def mouseReleased() = isCanvasDragged = false
 
+  override def mouseWheelMoved() = editor.scaleValue += applet.mouseWheelRotation
   
   override def keyTyped() = keys.values find {
     key =>
