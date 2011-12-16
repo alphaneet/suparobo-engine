@@ -215,15 +215,26 @@ class ButtonManager(val applet: PApplet) extends NotNull with MyUtil {
   
   protected val buttons = scala.collection.mutable.ArrayBuffer[Button]()
 
-  class Button(_images: List[PImage], var x: Int, var y: Int) extends NotNull {
-    val images: List[PImage] = {
-      _images match {
+  class Button(initImages: List[PImage]) extends NotNull {
+    private var _images: List[PImage] = Nil
+    def images = _images
+    def images_=(images: List[PImage]) {
+      _images = images match {
         case List(_, _, _, _) => _images
         case List(up, over, down) => List(up, over, down, up)
         case List(one) => List(one, one, one, one)
-        case _ => throw new java.lang.IllegalArgumentException("_images.size should be 1, 3, 4")
+        case _ => throw new java.lang.IllegalArgumentException("images.size should be 1, 3, 4")
       }
     }
+    images = initImages
+
+    private var _x = 0
+    def x = _x
+    def x_=(x: Int) { _x = x }
+
+    private var _y = 0
+    def y = _y
+    def y_=(y: Int) { _y = y }
 
     var fixedWidth  = 0
     var fixedHeight = 0
@@ -305,8 +316,12 @@ class ButtonManager(val applet: PApplet) extends NotNull with MyUtil {
   def mouseClicked(button: Button): Boolean =
     !mousePressed && button.status.isDown
 
-  def register(images: List[PImage], x: Int, y: Int): Button = {
-    val button = new Button(images, x, y)
+  def createButton(images: List[PImage]) = new Button(images)
+  
+  def register(images: List[PImage], x: Int = 0, y: Int = 0): Button = {
+    val button = createButton(images)
+    button.x = x
+    button.y = y
     buttons += button
     button
   }
@@ -347,8 +362,9 @@ class ListManager(applet: PApplet) extends ButtonManager(applet) {
   def bottom = y + height
   def right  = x + fullWidth
 
-  var focus: Option[Button] = None
-  def focus_=(button: Button) { focus = Option(button) }
+  private var _focus: Option[Button] = None
+  def focus = _focus
+  def focus_=(option: Option[Button]) { _focus = option }
 
   private var _scroll = 0
   def scroll = _scroll
@@ -363,21 +379,21 @@ class ListManager(applet: PApplet) extends ButtonManager(applet) {
   var scrollBarButton:  Option[Button] = None
   def scrollBarButton_=(images: List[PImage]) {
     scrollBarButton = Option(
-      new Button(images, 0, 0)
+      new Button(images)
     )
   }
   
   var scrollUpButton:   Option[Button] = None
   def scrollUpButton_=(images: List[PImage]) {
     scrollUpButton = Option(
-      new Button(images, 0, 0).action { listManager.scroll -= 1 }
+      new Button(images).action { listManager.scroll -= 1 }
     ) 
   }
   
   var scrollDownButton: Option[Button] = None
   def scrollDownButton_=(images: List[PImage]) {
     scrollDownButton = Option(
-      new Button(images, 0, 0).action { listManager.scroll += 1 }
+      new Button(images).action { listManager.scroll += 1 }
     )
   }
 
@@ -497,7 +513,8 @@ class ListManager(applet: PApplet) extends ButtonManager(applet) {
     }
   }
   
-  def remove() {
+  def remove(): Option[Button] = {
+    val removeFocus = focus
     focus foreach {
       button =>
       val index = buttons.indexOf(button)
@@ -510,6 +527,7 @@ class ListManager(applet: PApplet) extends ButtonManager(applet) {
       }
       if (listManager.underOverScroll == 0) listManager.scroll -= 1
     }
+    removeFocus
   }  
 }
 
@@ -528,7 +546,9 @@ class GraphicsGenerator(applet: processing.core.PApplet) extends NotNull {
   }
 
   def createLabel(text: String, width: Int, height: Int, size: Int,
-                  frontColor: Int, backColor: Int = -1, align: Int = CENTER): PImage = {
+                  frontColor: Int, backColor: Int = -1,
+                  frameWeight: Int = 0, frameColor: Int = -1, 
+                  align: Int = CENTER): PImage = {
     createAndDrawPImage(width, height) {
       g =>
 
@@ -539,6 +559,14 @@ class GraphicsGenerator(applet: processing.core.PApplet) extends NotNull {
         g.background(c._1, c._2, c._3)
       }
 
+      if (frameWeight > 0) {
+        val c = rgb(frameColor)
+        g.noFill()
+        g.strokeWeight(frameWeight)
+        g.stroke(c._1, c._2, c._3)
+        g.rect(0, 0, width - 1, height - 1)
+      }
+      
       val c = rgb(frontColor)
       g.fill(c._1, c._2, c._3)
       g.textFont(applet.createFont("", size))
