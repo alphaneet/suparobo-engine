@@ -289,10 +289,7 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       packs -= pack
     }
 
-    focus = listManager.focus match {
-      case Some(listButton) => packs.findByListButton(listButton)
-      case _ => None
-    }
+    focus = listManager.focus.flatMap { packs.findByListButton }
   }
   
   def updateIntParam(symbol: Symbol, value: Int) {
