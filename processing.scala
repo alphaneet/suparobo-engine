@@ -564,7 +564,7 @@ class GraphicsGenerator(applet: processing.core.PApplet) extends NotNull {
         g.noFill()
         g.strokeWeight(frameWeight)
         g.stroke(c._1, c._2, c._3)
-        g.rect(0, 0, width - 1, height - 1)
+        g.rect(1, 1, width - 2, height - 2)
       }
       
       val c = rgb(frontColor)

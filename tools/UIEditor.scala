@@ -11,22 +11,79 @@ object UIEditor extends EditorPApplet {
 
 class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   editor =>
+    
+  import processing.core.{ PImage, PConstants }
 
-  val LEFT_MENU_X   = 15
-  val RIGHT_MENU_X  = 665
+  // TK: MENU_LEFT_X の方がいいかも？
+  // 左 or 右のメニューの x 座標という文意なのだが、MENU_LEFT_X だと、
+  // とあるメニューの左 or 右の x 座標って勘違いしそうなので
+  // LEFT_MENU or RIGHT_MENU にした。
+  // MENU という接頭語を常に付けた方が分かりやすさはあると思う。まぁこまけぇこたぁ(ry
+  val LEFT_MENU_X   = 30
+  val RIGHT_MENU_X  = 1000
   val MENU_TOP      = 8
   val MENU_INTERVAL = 50
 
-  val CANVAS_X = 150
-  val CANVAS_Y = 50
-  val CANVAS_WIDTH  = 500
-  val CANVAS_HEIGHT = 500
-
-  import processing.core.{ PImage, PConstants }
+  // TK: 紛らわしいので変更する。
+  // 美術用語的な方面からぐぐって、キャンバスの下地的な単語に変更する。
+  // おそらくサーフェースだと思う（プラモ的に考えると）
+  val CANVAS_WIDTH  = 800
+  val CANVAS_HEIGHT = 600
+  val CANVAS_TOP  = 20
+  val CANVAS_LEFT = (applet.width >> 1) - (CANVAS_WIDTH >> 1)
+  val CANVAS_RIGHT  = CANVAS_LEFT + CANVAS_WIDTH
+  val CANVAS_BOTTOM = CANVAS_TOP  + CANVAS_HEIGHT
   
   val buttonManager = new ButtonManagerEx
 
-  case class Pack(var name: String, panelButton: panelManager.Button, listButton: listManager.Button)  
+  case class Pack(
+    private var _name: String,
+    private var _x: Int,
+    private var _y: Int,
+    private var _width: Int,
+    private var _height: Int,
+    panelButton: panelManager.Button,
+    listButton: listManager.Button
+  ) {
+    def updatePanelButtonImages() {
+      panelButton.images = createPanelButtonImages(name, width, height)
+    }
+    def updateListButtonImages() {
+      listButton.images  = createListButtonImages(name)
+    }
+    
+    def name = _name
+    def name_=(name: String) {
+      _name = name
+      updatePanelButtonImages()
+      updateListButtonImages()
+    }
+
+    def x = _x
+    def x_=(x: Int) {
+      _x = x
+      panelButton.x = x
+    }
+
+    def y = _y
+    def y_=(y: Int) {
+      _y = y
+      panelButton.y = y
+    }
+
+    def width = _width
+    def width_=(width: Int) {
+      _width = width
+      updatePanelButtonImages()
+    }
+
+    def height = _height
+    def height_=(height: Int) {
+      _height = height
+      updatePanelButtonImages()
+    }
+  }
+  
   val packs = new scala.collection.mutable.ArrayBuffer[Pack] {
     def findByPanelButton(panelButton: panelManager.Button): Option[Pack] = {
       find(_.panelButton == panelButton)
@@ -38,17 +95,22 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   
   object panelManager extends ButtonManager(applet) {
     class Panel(images: List[PImage]) extends Button(images) {
-      override def x_=(x: Int) { super.x = x + CANVAS_X }
-      override def y_=(y: Int) { super.y = y + CANVAS_Y }
+      override def x = canvas.realX + (super.x * canvas.scale).toInt
+      override def y = canvas.realY + (super.y * canvas.scale).toInt
+      override def width  = (image.width  * canvas.scale).toInt
+      override def height = (image.height * canvas.scale).toInt
+      override def draw() {
+        applet.image(image, x, y, width, height)
+      }
     }
-
+    
     override def createButton(images: List[PImage]) = new Panel(images)
   }
               
   val listManager = new ListManager(applet) {    
-    x = 660
+    x = RIGHT_MENU_X - 5
     y = (MENU_TOP + MENU_INTERVAL * 5) + 20
-    background(110, 270, 0xEEEEEE)
+    background(110, 300, 0xEEEEEE)
   }
   
   val paramManager = new TextManager(applet) {
@@ -113,8 +175,8 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
         ('gridHeight,   32,  5,   500,  "グリッドの高さ",   left,  top + diffY * 3),
         ('panelX,       0,   0,   2000, "パネルの x 座標",  right, top + diffY),
         ('panelY,       0,   0,   1500, "パネルの y 座標",  right, top + diffY * 2),
-        ('panelWidth,   50,  5,   1000, "パネルの幅",       right, top + diffY * 3),
-        ('panelHeight,  50,  5,   1000, "パネルの高さ",     right, top + diffY * 4)
+        ('panelWidth,   100, 5,   1000, "パネルの幅",       right, top + diffY * 3),
+        ('panelHeight,  100, 5,   1000, "パネルの高さ",     right, top + diffY * 4)
       ) map {
         case (symbol, default, min, max, text, x, y) =>
         registerMenuLabel(x, y, text)
@@ -159,39 +221,78 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     def intField(symbol: Symbol): IntField = findField(symbol)(intFields, emptyIntField)
     def stringField(symbol: Symbol): StringField = findField(symbol)(stringFields, emptyStringField)
 
+    def canvasWidth:  Int = intField('canvasWidth).value
+    def canvasHeight: Int = intField('canvasHeight).value
     def panelX: Int = intField('panelX).value
     def panelY: Int = intField('panelY).value
     def panelWidth:  Int = intField('panelWidth).value
     def panelHeight: Int = intField('panelHeight).value
     def panelName: String = stringField('panelName).getText
-
+    
+    def canvasWidth_=(value: Int)  { intField('canvasWidth).value  = value }
+    def canvasHeight_=(value: Int) { intField('canvasHeight).value = value }
     def panelX_=(value: Int) { intField('panelX).value = value }
     def panelY_=(value: Int) { intField('panelY).value = value }
     def panelWidth_=(value: Int)  { intField('panelWidth).value  = value }
     def panelHeight_=(value: Int) { intField('panelHeight).value = value }
     def panelName_=(value: String) { stringField('panelName).setText(value) }
 
-    def panelParams = (panelName, panelX, panelY, panelWidth, panelHeight)
+    def panelParams = (panelName, panelX, panelY, panelWidth, panelHeight)    
     def panelParams_=(params: Tuple5[String, Int, Int, Int, Int]) {
       panelName = params._1
-      panelX = params._2 - CANVAS_X
-      panelY = params._3 - CANVAS_Y
+      panelX = params._2
+      panelY = params._3
       panelWidth  = params._4
       panelHeight = params._5
     }
+    def panelParams_=(pack: Pack) {
+      panelParams = (pack.name, pack.x, pack.y, pack.width, pack.height)
+    }
   }
 
+  object canvas {
+    private var _scale = 1.0f
+    def scale = _scale
+    def scale_=(scale: Float) {
+      val (prevW, prevH) = (realWidth, realHeight)
+      _scale = rangeOfNumber(scale, 0.3f, 3.0f)
+
+      x += (prevW - realWidth)  / 2
+      y += (prevH - realHeight) / 2 
+    }
+
+    private var _x = 0
+    def x = _x
+    def x_=(x: Int) {
+      _x = rangeOfNumber(x, -realWidth + 5, CANVAS_WIDTH - 5)
+    }
+    def realX = x + CANVAS_LEFT
+    
+    private var _y = 0
+    def y = _y
+    def y_=(y: Int) {
+      _y = rangeOfNumber(y, -realHeight + 5, CANVAS_HEIGHT - 5)
+    }
+    def realY = y + CANVAS_TOP
+    
+    var width = paramManager.canvasWidth
+    def realWidth = (width.toFloat * scale).toInt
+    
+    var height = paramManager.canvasHeight
+    def realHeight = (height.toFloat * scale).toInt
+  }
+  
   // initialize
-  {
+  {    
     import buttonManager.createButtonByBasicColor
     val createListButton = createButtonByBasicColor(60, 20, 13)
 
-    val left = RIGHT_MENU_X
+    val right = RIGHT_MENU_X
     val top  = MENU_TOP + MENU_INTERVAL * 5
-    registerMenuLabel(left, top, "パネルリスト")
+    registerMenuLabel(right, top, "パネルリスト")
         
-    createListButton(660, 560, "new")    { editor.create() }
-    createListButton(730, 560, "delete") { editor.remove() }
+    createListButton(right -  5, 590, "new")    { editor.create() }
+    createListButton(right + 65, 590, "delete") { editor.remove() }
 
     listManager.scrollWidth = 20
     listManager.scrollBackground = 0xCCCCCC
@@ -227,7 +328,15 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
 
   def createPanelButtonImages(text: String, width: Int, height: Int): List[PImage] = {
     def createImage(color: Int): PImage = {
-      gg.createLabel(text, width, height, 12, color, frameWeight = 1, frameColor = color)
+      gg.createLabel(
+        text,
+        width,
+        height,
+        size = 18,
+        frontColor  = color,
+        frameWeight = 1,
+        frameColor  = color
+      )
     }
 
     List(0x000000, 0xFF3333, 0x000000).map(createImage)
@@ -245,17 +354,7 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   def focus = _focus
   def focus_=(focus: Option[Pack]) {
     _focus = focus
-    _focus foreach {
-      pack =>
-      val p = pack.panelButton
-      paramManager.panelParams = (
-        pack.name,
-        p.x,
-        p.y,
-        p.width,
-        p.height
-      )
-    }
+    _focus foreach { paramManager.panelParams = _ }
   }
   
   def create() {
@@ -263,7 +362,12 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
 
     val pack = Pack(
       name,
-      panelManager.register(createPanelButtonImages(name, width, height), x, y).action {
+      x,
+      y,
+      width,
+      height,
+      panelManager.register(createPanelButtonImages(name, width, height), x, y).action
+      {
         panelButton =>
         focus = packs.findByPanelButton(panelButton)
       },
@@ -293,40 +397,61 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   }
   
   def updateIntParam(symbol: Symbol, value: Int) {
-    if ( List('panelX, 'panelY, 'panelWidth, 'panelHeight).contains(symbol) ) {
-      focus foreach {
-        pack =>
-        val p = pack.panelButton
-        symbol match {
-          case 'panelX => p.x = value
-          case 'panelY => p.y = value
-          case 'panelWidth  => p.images = createPanelButtonImages(pack.name, value, p.height)
-          case 'panelHeight => p.images = createPanelButtonImages(pack.name, p.width, value)
-        }
+    symbol match {
+      case 'canvasWidth  => canvas.width  = value
+      case 'canvasHeight => canvas.height = value
+      case 'gridWidth  =>
+      case 'gridHeight =>
+      case _ =>
+    }
+    
+    focus foreach {
+      pack =>
+      symbol match {
+        case 'panelX => pack.x = value
+        case 'panelY => pack.y = value
+        case 'panelWidth  => pack.width  = value
+        case 'panelHeight => pack.height = value
+        case _ =>
       }
     }
   }
 
   def updateStringParam(symbol: Symbol, value: String) {    
-    if ( List('panelName).contains(symbol) ) {
-      focus foreach {
-        pack =>
-        val p = pack.panelButton
-        symbol match {
-          case 'panelName =>
-            pack.name = value
-            p.images = createPanelButtonImages(value, p.width, p.height)
-            pack.listButton.images = createListButtonImages(value)
-        }
+    focus foreach {
+      pack =>
+      symbol match {
+        case 'panelName => pack.name = value
+        case _ =>
       }
     }
   }
-  
+
   override def draw() {
-    applet.background(200, 200, 255)
     applet.noStroke()
-    applet.fill(250)
-    applet.rect(150, 50, 500, 500)
+    applet.fill(200)
+    applet.rect(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT)
+
+    applet.fill(255)
+    applet.rect(canvas.realX, canvas.realY, canvas.realWidth, canvas.realHeight)
+    
+    panelManager.checkMouse()
+    panelManager.draw()
+
+    focus foreach {
+      pack =>
+      val p = pack.panelButton
+      applet.noStroke()
+      applet.fill(200, 200, 200, 128)
+      applet.rect(p.x, p.y, p.width, p.height)
+    }
+
+    // 画面の手前と奥の壁
+    applet.fill(200, 200, 255)
+    applet.rect(0, 0, applet.width, CANVAS_TOP)
+    applet.rect(0, CANVAS_BOTTOM, applet.width, applet.height - CANVAS_BOTTOM)
+    applet.rect(0, CANVAS_TOP, CANVAS_LEFT, CANVAS_HEIGHT)
+    applet.rect(CANVAS_RIGHT, CANVAS_TOP, applet.width - CANVAS_RIGHT, CANVAS_HEIGHT)
 
     buttonManager.checkMouse()
     buttonManager.draw()
@@ -336,16 +461,8 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     listManager.checkMouse()
     listManager.draw()
 
-    panelManager.checkMouse()
-    panelManager.draw()
-
-    focus foreach {      
+    focus foreach {
       pack =>
-
-      val p = pack.panelButton
-      applet.noStroke()
-      applet.fill(200, 200, 200, 128)
-      applet.rect(p.x, p.y, p.width, p.height)
 
       val l = pack.listButton
       if (!l.status.isDisabled) {
@@ -367,6 +484,17 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   override def mouseWheelMoved() {
     if (listManager.mouseContains) {
       listManager.scroll += applet.mouseWheelRotation
+    }
+
+    if (mouseContains(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT)) {
+      canvas.scale += applet.mouseWheelRotation.toFloat / 100
+    }
+  }
+
+  override def mouseDragged() {
+    if (mouseContains(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT)) {
+      canvas.x += applet.mouseX - applet.pmouseX
+      canvas.y += applet.mouseY - applet.pmouseY
     }
   }
 }
