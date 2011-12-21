@@ -385,7 +385,9 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
 
   def saveXML(filename: String = applet.selectOutput()) {
     if (filename == null) return
-    val xml = <layouts>
+    val xml = <config>
+    <width>{  canvas.width  }</width>
+    <height>{ canvas.height }</height>
     {
       packs map {
         pack =>
@@ -398,7 +400,7 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
         </layout>
       }
     }
-    </layouts>
+    </config>
     
     scala.xml.XML.save(filename, xml, "utf-8")
   }
@@ -408,8 +410,15 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     clear()
 
     // TK: ちゃんとしたデータが入ってるってあたし信じてるから！！！
-    // Modツールとしてユーザーに提供する時はチェック追加しましょうね＾ω＾；
-    (xml.XML.loadFile(filename) \ "layout").foreach {
+    // Modツールとしてユーザーに提供する時はチェック追加しましょうね>_<
+    val xml = scala.xml.XML.loadFile(filename)
+    canvas.width  = (xml \ "width").text.toInt
+    paramManager.canvasWidth = canvas.width
+    
+    canvas.height = (xml \ "height").text.toInt
+    paramManager.canvasHeight = canvas.height
+  
+    (xml \ "layout").foreach {
       layout =>
       create(
         (layout \ "name").text,
