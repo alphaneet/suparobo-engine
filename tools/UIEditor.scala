@@ -14,28 +14,28 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     
   import processing.core.{ PImage, PConstants }
 
-  // TK: MENU_LEFT_X の方がいいかも？
-  // 左 or 右のメニューの x 座標という文意なのだが、MENU_LEFT_X だと、
-  // とあるメニューの左 or 右の x 座標って勘違いしそうなので
-  // LEFT_MENU or RIGHT_MENU にした。
-  // MENU という接頭語を常に付けた方が分かりやすさはあると思う。まぁこまけぇこたぁ(ry
+  // TK: MENU_(LEFT or RIGHT)_X の方がいいかも？
   val LEFT_MENU_X   = 30
   val RIGHT_MENU_X  = 1000
   val MENU_TOP      = 8
   val MENU_INTERVAL = 50
 
-  // TK: 紛らわしいので変更する。
-  // 美術用語的な方面からぐぐって、キャンバスの下地的な単語に変更する。
-  // おそらくサーフェースだと思う（プラモ的に考えると）
-  val CANVAS_WIDTH  = 800
-  val CANVAS_HEIGHT = 600
-  val CANVAS_TOP  = 20
-  val CANVAS_LEFT = (applet.width >> 1) - (CANVAS_WIDTH >> 1)
-  val CANVAS_RIGHT  = CANVAS_LEFT + CANVAS_WIDTH
-  val CANVAS_BOTTOM = CANVAS_TOP  + CANVAS_HEIGHT
+  val WORKSPACE_WIDTH = 800
+  val WORKSPACE_HEIGHT = 600
+  val WORKSPACE_TOP = 20
+  val WORKSPACE_LEFT = (applet.width >> 1) - (WORKSPACE_WIDTH >> 1)
+  val WORKSPACE_RIGHT = WORKSPACE_LEFT + WORKSPACE_WIDTH
+  val WORKSPACE_BOTTOM = WORKSPACE_TOP + WORKSPACE_HEIGHT
   
   val buttonManager = new ButtonManagerEx
 
+  var _focus: Option[Pack] = None
+  def focus = _focus
+  def focus_=(focus: Option[Pack]) {
+    _focus = focus
+    _focus foreach { paramManager.panelParams = _ }
+  }
+  
   case class Pack(
     private var _name: String,
     private var _x: Int,
@@ -105,6 +105,9 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     }
     
     override def createButton(images: List[PImage]) = new Panel(images)
+
+    override def mouseClicked(button: Button): Boolean =
+      mousePressed && button.status.isOver
   }
               
   val listManager = new ListManager(applet) {    
@@ -171,8 +174,8 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       List(
         ('canvasWidth,  800, 200, 2000, "キャンバスの幅",   left,  top),
         ('canvasHeight, 600, 150, 1500, "キャンバスの高さ", left,  top + diffY),
-        ('gridWidth,    32,  5,   500,  "グリッドの幅",     left,  top + diffY * 2),
-        ('gridHeight,   32,  5,   500,  "グリッドの高さ",   left,  top + diffY * 3),
+        ('gridWidth,    50,  5,   500,  "グリッドの幅",     left,  top + diffY * 2),
+        ('gridHeight,   50,  5,   500,  "グリッドの高さ",   left,  top + diffY * 3),
         ('panelX,       0,   0,   2000, "パネルの x 座標",  right, top + diffY),
         ('panelY,       0,   0,   1500, "パネルの y 座標",  right, top + diffY * 2),
         ('panelWidth,   100, 5,   1000, "パネルの幅",       right, top + diffY * 3),
@@ -223,6 +226,9 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
 
     def canvasWidth:  Int = intField('canvasWidth).value
     def canvasHeight: Int = intField('canvasHeight).value
+    def gridWidth: Int  = intField('gridWidth).value
+    def gridHeight: Int = intField('gridHeight).value
+    
     def panelX: Int = intField('panelX).value
     def panelY: Int = intField('panelY).value
     def panelWidth:  Int = intField('panelWidth).value
@@ -231,6 +237,9 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     
     def canvasWidth_=(value: Int)  { intField('canvasWidth).value  = value }
     def canvasHeight_=(value: Int) { intField('canvasHeight).value = value }
+    def gridWidth_=(value: Int)  { intField('gridWidth).value  = value }
+    def gridHeight_=(value: Int) { intField('gridHeight).value = value }
+    
     def panelX_=(value: Int) { intField('panelX).value = value }
     def panelY_=(value: Int) { intField('panelY).value = value }
     def panelWidth_=(value: Int)  { intField('panelWidth).value  = value }
@@ -264,22 +273,41 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     private var _x = 0
     def x = _x
     def x_=(x: Int) {
-      _x = rangeOfNumber(x, -realWidth + 5, CANVAS_WIDTH - 5)
+      _x = rangeOfNumber(x, -realWidth + 5, WORKSPACE_WIDTH - 5)
     }
-    def realX = x + CANVAS_LEFT
+    def realX = x + WORKSPACE_LEFT
     
     private var _y = 0
     def y = _y
     def y_=(y: Int) {
-      _y = rangeOfNumber(y, -realHeight + 5, CANVAS_HEIGHT - 5)
+      _y = rangeOfNumber(y, -realHeight + 5, WORKSPACE_HEIGHT - 5)
     }
-    def realY = y + CANVAS_TOP
+    def realY = y + WORKSPACE_TOP
     
     var width = paramManager.canvasWidth
     def realWidth = (width.toFloat * scale).toInt
     
     var height = paramManager.canvasHeight
     def realHeight = (height.toFloat * scale).toInt
+  }
+
+  object grid {
+    var margin = 2
+    var isActive = false
+    def width  = paramManager.gridWidth
+    def height = paramManager.gridHeight
+
+    def fit(value: Int, length: Int): Int = {
+      val delay = value + margin
+      if ( isActive && (delay % length) <= (margin << 1) ) {
+        (delay / length) * length
+      } else {
+        value
+      }
+    }
+    
+    def fitX(x: Int): Int = fit(x, width)
+    def fitY(y: Int): Int = fit(y, height)
   }
   
   // initialize
@@ -310,6 +338,11 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     listManager.scrollUpButton   = createScrollButton(0x25b2)
     listManager.scrollDownButton = createScrollButton(0x25bc)
     listManager.scrollBarButton  = createScrollButton(0x25a0)
+    
+    val createMenuButton = createButtonByBasicColor(150, 30, 16)
+    createMenuButton(15, 230, "grid") { grid.isActive = !grid.isActive }
+    createMenuButton(15, 280, "save") { saveXML() }
+    createMenuButton(15, 330, "load") { loadXML() }
   }
 
   def registerMenuLabel(x: Int, y: Int, text: String): Image = {
@@ -350,15 +383,53 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     List(0x666666, 0x999999, 0x555555).map(createImage)
   }
 
-  var _focus: Option[Pack] = None
-  def focus = _focus
-  def focus_=(focus: Option[Pack]) {
-    _focus = focus
-    _focus foreach { paramManager.panelParams = _ }
+  def saveXML(filename: String = applet.selectOutput()) {
+    if (filename == null) return
+    val xml = <layouts>
+    {
+      packs map {
+        pack =>
+        <layout>
+        <name>{ pack.name }</name>
+        <x>{ pack.x }</x>
+        <y>{ pack.y }</y>
+        <width>{ pack.width }</width>
+        <height>{ pack.height }</height>
+        </layout>
+      }
+    }
+    </layouts>
+    
+    scala.xml.XML.save(filename, xml, "utf-8")
+  }
+
+  def loadXML(filename: String = applet.selectInput()) {
+    if (filename == null) return    
+    clear()
+
+    // TK: ちゃんとしたデータが入ってるってあたし信じてるから！！！
+    // Modツールとしてユーザーに提供する時はチェック追加しましょうね＾ω＾；
+    (xml.XML.loadFile(filename) \ "layout").foreach {
+      layout =>
+      create(
+        (layout \ "name").text,
+        (layout \ "x").text.toInt,        
+        (layout \ "y").text.toInt,
+        (layout \ "width").text.toInt,
+        (layout \ "height").text.toInt
+      )
+    }
+  }
+
+  def clear() {
+    focus = None
+    listManager.clear()
+    panelManager.clear()
+    packs.clear()
   }
   
-  def create() {
-    val (name, x, y, width, height) = paramManager.panelParams
+  def create(params: Tuple5[String, Int, Int, Int, Int] = paramManager.panelParams) {
+    val (name, x, y, width, height) = params
 
     val pack = Pack(
       name,
@@ -430,12 +501,35 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   override def draw() {
     applet.noStroke()
     applet.fill(200)
-    applet.rect(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT)
+    applet.rect(WORKSPACE_LEFT, WORKSPACE_TOP, WORKSPACE_WIDTH, WORKSPACE_HEIGHT)
 
     applet.fill(255)
     applet.rect(canvas.realX, canvas.realY, canvas.realWidth, canvas.realHeight)
+
+    if (grid.isActive) {
+      applet.stroke(100)
+      applet.strokeWeight(1)
+
+      val sx = canvas.realX.toFloat
+      val ex = (sx + canvas.realWidth).toFloat
+      val stepX = grid.width.toFloat * canvas.scale
+      (sx to ex by stepX) foreach {
+        x =>
+        applet.line(x, canvas.realY, x, canvas.realY + canvas.realHeight)
+      }
+
+      val sy = canvas.realY.toFloat
+      val ey = (sy + canvas.realHeight).toFloat
+      val stepY = grid.height.toFloat * canvas.scale
+      (sy to ey by stepY) foreach {
+        y =>
+        applet.line(canvas.realX, y, canvas.realX + canvas.realWidth, y)
+      }
+      
+      applet.noStroke()
+    }
     
-    panelManager.checkMouse()
+    panelManager.checkMouse()    
     panelManager.draw()
 
     focus foreach {
@@ -448,10 +542,10 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
 
     // 画面の手前と奥の壁
     applet.fill(200, 200, 255)
-    applet.rect(0, 0, applet.width, CANVAS_TOP)
-    applet.rect(0, CANVAS_BOTTOM, applet.width, applet.height - CANVAS_BOTTOM)
-    applet.rect(0, CANVAS_TOP, CANVAS_LEFT, CANVAS_HEIGHT)
-    applet.rect(CANVAS_RIGHT, CANVAS_TOP, applet.width - CANVAS_RIGHT, CANVAS_HEIGHT)
+    applet.rect(0, 0, applet.width, WORKSPACE_TOP)
+    applet.rect(0, WORKSPACE_BOTTOM, applet.width, applet.height - WORKSPACE_BOTTOM)
+    applet.rect(0, WORKSPACE_TOP, WORKSPACE_LEFT, WORKSPACE_HEIGHT)
+    applet.rect(WORKSPACE_RIGHT, WORKSPACE_TOP, applet.width - WORKSPACE_RIGHT, WORKSPACE_HEIGHT)
 
     buttonManager.checkMouse()
     buttonManager.draw()
@@ -486,15 +580,36 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       listManager.scroll += applet.mouseWheelRotation
     }
 
-    if (mouseContains(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT)) {
+    if ( mouseContainsByWorkspace ) {
       canvas.scale += applet.mouseWheelRotation.toFloat / 100
     }
   }
 
   override def mouseDragged() {
-    if (mouseContains(CANVAS_LEFT, CANVAS_TOP, CANVAS_WIDTH, CANVAS_HEIGHT)) {
-      canvas.x += applet.mouseX - applet.pmouseX
-      canvas.y += applet.mouseY - applet.pmouseY
+    if ( mouseContainsByWorkspace ) {
+      val (diffX, diffY) = (applet.mouseX - applet.pmouseX, applet.mouseY - applet.pmouseY)
+      
+      if ( panelManager.isLock ) {
+        focus foreach {
+          pack =>
+          pack.x += (diffX / canvas.scale).toInt
+          pack.x = grid.fitX(pack.x)
+          pack.y += (diffY / canvas.scale).toInt
+          pack.y = grid.fitY(pack.y)
+          paramManager.panelParams = pack
+        }
+      } else {
+        canvas.x += diffX
+        canvas.y += diffY
+      }
     }
   }
+
+  def mouseContainsByWorkspace: Boolean =
+    mouseContains(
+      WORKSPACE_LEFT,
+      WORKSPACE_TOP,
+      WORKSPACE_WIDTH,
+      WORKSPACE_HEIGHT
+    )
 }

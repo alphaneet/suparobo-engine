@@ -204,16 +204,15 @@ object ButtonStatus {
   val DISABLED = Value(3)  
 }
 
-object ButtonManager {  
-  private var isLock = false  
-}
-
 class ButtonManager(val applet: PApplet) extends NotNull with MyUtil {
   buttonManager =>
     
   import processing.core.{ PImage, PVector, PConstants }
   
   protected val buttons = scala.collection.mutable.ArrayBuffer[Button]()
+  private var _isLock = false
+  private def isLock_=(isLock: Boolean) { _isLock = isLock }
+  def isLock = _isLock
 
   class Button(initImages: List[PImage]) extends NotNull {
     private var _images: List[PImage] = Nil
@@ -230,11 +229,13 @@ class ButtonManager(val applet: PApplet) extends NotNull with MyUtil {
 
     private var _x = 0
     def x = _x
-    def x_=(x: Int) { _x = x }
+    def x_=(x: Int)  { _x  = x }
+    def addX(x: Int) { _x += x }
 
     private var _y = 0
     def y = _y
-    def y_=(y: Int) { _y = y }
+    def y_=(y: Int)  { _y  = y }
+    def addY(y: Int) { _y += y }
 
     var fixedWidth  = 0
     var fixedHeight = 0
@@ -275,13 +276,13 @@ class ButtonManager(val applet: PApplet) extends NotNull with MyUtil {
       val result = isOver && buttonManager.mouseClicked(this)
 
       if (mousePressed) {
-        if (isOver && !ButtonManager.isLock) {
+        if (isOver && !buttonManager.isLock) {
           status.down()
-          ButtonManager.isLock = true
+          buttonManager.isLock = true
         }
       } else {
         if (isOver) status.over() else status.up()
-        ButtonManager.isLock = false
+        buttonManager.isLock = false
       }
       result
     }
@@ -308,9 +309,9 @@ class ButtonManager(val applet: PApplet) extends NotNull with MyUtil {
   /**
    * override 例
    * mousePressed - ボタンを押してる間ずっと true
-   * mousePressed && button.status == Button.OVER
+   * mousePressed && button.status.isOver
    *   - 押した時に true
-   * !mousePressed && button.status == Button.DOWN
+   * !mousePressed && button.status.isDown
    *   - 押して離した時に true
    */
   def mouseClicked(button: Button): Boolean =
@@ -330,6 +331,8 @@ class ButtonManager(val applet: PApplet) extends NotNull with MyUtil {
     buttons -= button
     button
   }
+
+  def clear(): Unit = while(!buttons.isEmpty) { unregister(buttons.head) }
 
   def checkMouse(button: Button) {
     if (button.checkMouse) button.action.foreach { _(button) }
