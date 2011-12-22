@@ -1,9 +1,4 @@
 package com.github.alphaneet.suparobo_engine.tools
-import com.github.alphaneet.processing.{
-  ListManager,
-  TextManager,
-  ButtonManager
-}
 
 object UIEditor extends EditorPApplet {
   def createEditorScene = new UIEditorScene(this)
@@ -13,6 +8,11 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   editor =>
     
   import processing.core.{ PImage, PConstants }
+  import com.github.alphaneet.processing.{
+    ListManager,
+    TextManager,
+    ButtonManager
+  }
 
   // TK: MENU_(LEFT or RIGHT)_X の方がいいかも？
   val LEFT_MENU_X   = 30
@@ -119,51 +119,10 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   val paramManager = new TextManager(applet) {
     paramManager =>
       
-    abstract class CommonField(val symbol: Symbol) extends TextField {
-      def validateValue(): Unit
-      
-      import java.awt.event.{ FocusAdapter, FocusEvent, ActionListener, ActionEvent }
-      addFocusListener(new FocusAdapter() {
-        override def focusLost(e: FocusEvent): Unit = validateValue()
-      })
-      addActionListener(new ActionListener() {
-        def actionPerformed(e: ActionEvent): Unit = validateValue()
-      })
+    class StringField(symbol: Symbol) extends ValidateField(symbol) {
+      override def updateValue(): Unit = editor.updateStringParam(symbol, getText)
     }
     
-    class StringField(symbol: Symbol) extends CommonField(symbol) {
-      def validateValue(): Unit = editor.updateStringParam(symbol, getText) 
-    }
-    
-    class IntField(symbol: Symbol, min: Int, max: Int) extends CommonField(symbol) {
-      private var _value = 0
-      def value = _value
-      def value_=(v: Int) {
-        _value = rangeOfNumber(v, min, max)
-        setText(_value.toString)
-      }
-
-      def validateValue() {
-        value = try {
-          getText.toInt
-        } catch {
-          case _ => min
-        }
-
-        editor.updateIntParam(symbol, value)
-      }
-      
-      import javax.swing.text.{ PlainDocument, AttributeSet }
-      setDocument(new PlainDocument() {
-        override def insertString(offs: Int, str: String, a: AttributeSet) {
-          try {
-            str.toInt
-            super.insertString(offs, str, a)
-          } catch { case _ => return }
-        }
-      })      
-    }
-
     val intFields: List[IntField] = {
       val createChangeButton = buttonManager.createButtonByBasicColor(20, 20, 15)
       val left  = LEFT_MENU_X
@@ -184,8 +143,10 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
         case (symbol, default, min, max, text, x, y) =>
         registerMenuLabel(x, y, text)
         new IntField(symbol, min, max) {
+          override def updateValue(): Unit = editor.updateIntParam(symbol, value)
+          
           setBounds(x + 30, y + 20, 60, 25)
-          value = applet.config(symbol, default)
+          value = editor.applet.config(symbol, default)
 
           List(
             (0x25C0, -10,  -10),
@@ -218,7 +179,7 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     private val emptyIntField = new IntField('emptyIntField, 0, 0)
     private val emptyStringField = new StringField('emptyStringField)
 
-    private def findField[T <: CommonField](symbol: Symbol)(fields: List[T], default: T): T =
+    private def findField[T <: ValidateField](symbol: Symbol)(fields: List[T], default: T): T =
       fields.find(_.symbol == symbol).getOrElse(default)
     
     def intField(symbol: Symbol): IntField = findField(symbol)(intFields, emptyIntField)
@@ -385,7 +346,7 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
 
   def saveXML(filename: String = applet.selectOutput()) {
     if (filename == null) return
-    val xml = <config>
+    val xml = <layouts>
     <width>{  canvas.width  }</width>
     <height>{ canvas.height }</height>
     {
@@ -400,7 +361,7 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
         </layout>
       }
     }
-    </config>
+    </layouts>
     
     scala.xml.XML.save(filename, xml, "utf-8")
   }

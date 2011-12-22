@@ -162,7 +162,7 @@ class Swing(applet: PApplet) extends javax.swing.JPanel(null) {
   applet.swing = this
 }
 
-class SwingManager(applet: PApplet) extends NotNull {  
+class SwingManager(val applet: PApplet) extends NotNull {  
   val swing = new Swing(applet)
   
   trait Component extends javax.swing.JComponent {
@@ -175,10 +175,24 @@ class SwingManager(applet: PApplet) extends NotNull {
   }
 }
 
-class TextManager(applet: PApplet) extends SwingManager(applet) {
-  class TextField extends javax.swing.JTextField with Component {
+class TextManager(applet: PApplet) extends SwingManager(applet) with MyUtil {
+  val textFields = scala.collection.mutable.ArrayBuffer[TextField]()
+  def apply(symbol: Symbol): Option[TextField] = textFields.find(_.symbol == symbol)
+
+  def toInt(symbol: Symbol, default: Int = 0): Int =
+    try {
+      apply(symbol).map(_.getText).getOrElse("").toInt
+    } catch {
+      case _ => default
+    }
+    
+  def toText(symbol: Symbol, default: String = ""): String =
+    apply(symbol).map(_.getText).getOrElse(default)
+  
+  class TextField(val symbol: Symbol) extends javax.swing.JTextField with Component {
     textField =>
-      
+
+    textFields += textField
     import java.awt.event.{ ActionListener, ActionEvent }
     
     def enter(action: TextField => Unit): TextField = {
@@ -188,11 +202,53 @@ class TextManager(applet: PApplet) extends SwingManager(applet) {
       this
     }
   }
-  
-  def registerTextField(x: Int, y: Int, width: Int, height: Int): TextField = 
-    new TextField {      
-      setBounds(x, y, width, height)
+
+  class ValidateField(symbol: Symbol) extends TextField(symbol) {
+    def validateValue() {}
+    def updateValue() {}
+    
+    import java.awt.event.{ FocusAdapter, FocusEvent, ActionListener, ActionEvent }
+    addFocusListener(new FocusAdapter() {
+      override def focusLost(e: FocusEvent): Unit = { validateValue(); updateValue() }
+    })
+    addActionListener(new ActionListener() {
+      def actionPerformed(e: ActionEvent): Unit = { validateValue(); updateValue() }
+    })
+  }
+
+  class IntField(symbol: Symbol, min: Int, max: Int) extends ValidateField(symbol) {
+    val defaultValue = min
+    
+    private var _value = 0
+    def value = _value
+    def value_=(v: Int) {
+      _value = rangeOfNumber(v, min, max)
+      super.setText(_value.toString)
     }
+
+    override def setText(text: String) {
+      super.setText(text)
+      validateValue()
+    }
+
+    override def validateValue() {
+      value = try {
+        getText.toInt
+      } catch {
+        case _ => defaultValue
+      }
+    }
+    
+    import javax.swing.text.{ PlainDocument, AttributeSet }
+    setDocument(new PlainDocument() {
+      override def insertString(offs: Int, str: String, a: AttributeSet) {
+        try {
+          str.toInt
+          super.insertString(offs, str, a)
+        } catch { case _ => return }
+      }
+    })      
+  }      
 }
 
 object ButtonStatus {
