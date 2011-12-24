@@ -2,12 +2,6 @@
     <width>550</width>
     <height>600</height>
     <layout>
-        <name>loadImage</name>
-        <x>50</x>
-        <y>500</y>
-        <width>200</width>
-        <height>30</height>
-        </layout><layout>
         <name>canvas</name>
         <x>50</x>
         <y>225</y>
@@ -15,9 +9,9 @@
         <height>200</height>
         </layout><layout>
         <name>imageFilename</name>
-        <x>50</x>
-        <y>450</y>
-        <width>200</width>
+        <x>75</x>
+        <y>475</y>
+        <width>150</width>
         <height>25</height>
         </layout><layout>
         <name>list</name>

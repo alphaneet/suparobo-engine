@@ -554,7 +554,7 @@ class ListManager(applet: PApplet) extends ButtonManager(applet) {
       }
     }
   }
-
+  
   override def checkMouse() {
     scrollButtons foreach { _.foreach(checkMouse) }
     super.checkMouse()
@@ -587,7 +587,12 @@ class ListManager(applet: PApplet) extends ButtonManager(applet) {
       if (listManager.underOverScroll == 0) listManager.scroll -= 1
     }
     removeFocus
-  }  
+  }
+  
+  override def clear() {
+    super.clear()
+    focus = None
+  }
 }
 
 class GraphicsGenerator(applet: processing.core.PApplet) extends NotNull {
