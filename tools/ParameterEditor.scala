@@ -14,6 +14,8 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   }
 
   val SCROLL_WIDTH = 20
+  val IMAGE_DIR = "./data/"
+  val IMAGE_EXT = ".png"
 
   case class Parameter(
     name: String,
@@ -60,11 +62,7 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       paramManager('imageFilename).foreach {
         _.setText(filename)
       }
-
-      val fname = imagePath(filename)
-      val file = new java.io.File(fname)
-      
-      image = if (file.isFile) Option(applet.loadImage(fname)) else None
+      image = Option(applet.loadImage(imagePath(filename)))
     }
     
     def draw() {
@@ -167,8 +165,8 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     }
 
     List(
-      ("./data/", -80),
-      (".png", 120)
+      (IMAGE_DIR, -80),
+      (IMAGE_EXT, 120)
     ) foreach {
       case (text, addX) =>
       layout('imageFilename) {
@@ -289,7 +287,7 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   }
 
   def imagePath(filename: String): String =
-    "data/" + filename + ".png"
+    IMAGE_DIR + filename + IMAGE_EXT
     
   def loadImage() {
     focus foreach {
