@@ -690,3 +690,44 @@ class GraphicsGenerator(applet: processing.core.PApplet) extends NotNull {
     image
   }
 }
+
+class LayoutXML(val elem: scala.xml.NodeSeq) {
+  def this(filename: String) = this(
+    try {
+      scala.xml.XML.loadFile(filename)
+    } catch {
+      case ex =>
+      Console.err.println(ex)
+      <dummy></dummy>
+    }      
+  )
+  
+  import java.awt.Rectangle
+  
+  val layouts = elem \ "layout"
+
+  def apply(symbol: Symbol)(f: Rectangle => Unit): Unit = f(rect(symbol))
+  def apply(name: String)(f: Rectangle => Unit): Unit = f(rect(name))
+
+  def rect(symbol: Symbol): Rectangle = rect(symbol.name)
+  def rect(name: String): Rectangle = {
+    layouts.find(xml => (xml \ "name").text == name).map {
+      xml =>
+      try {
+        new Rectangle(
+          (xml \ "x").text.toInt,
+          (xml \ "y").text.toInt,
+          (xml \ "width").text.toInt,
+          (xml \ "height").text.toInt
+        )
+      } catch {
+        case ex =>
+        Console.err.println("layout load error: " + ex)
+        new Rectangle(0, 0, 0, 0)
+      }
+    } getOrElse {
+      Console.err.println("not found: " + name)
+      new Rectangle(0, 0, 0, 0)
+    }
+  }
+}

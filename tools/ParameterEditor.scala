@@ -22,7 +22,8 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     hitPoint: Int,
     moveRangePoint: Int,
     attackPoint: Int,
-    attackRangePoint: Int
+    attackRangePoint: Int,
+    cost: Int
   ) extends NotNull
 
   case class Pack(
@@ -121,7 +122,8 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       ('hitPoint, "HP", 0, 9999),
       ('moveRangePoint, "移動力", 0, 20),
       ('attackPoint, "攻撃力", 0, 9999),
-      ('attackRangePoint, "攻撃範囲", 0, 20)
+      ('attackRangePoint, "攻撃範囲", 0, 20),
+      ('cost, "コスト", 1, 10)
     ) foreach {
       case (symbol, text, min, max) =>
       val rect = layout.rect(symbol)
@@ -186,7 +188,7 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
         text,
         rect.width + 50,
         rect.height,
-        size = 18,
+        size = 15,
         frontColor = 0xFFFFFF
       )
     )
@@ -251,6 +253,7 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
         <moveRangePoint>{ p.moveRangePoint }</moveRangePoint>
         <attackPoint>{ p.attackPoint }</attackPoint>
         <attackRangePoint>{ p.attackRangePoint }</attackRangePoint>
+        <cost>{ p.cost }</cost>
         <imageFilename>{ pack.imageFilename }</imageFilename>
         </parameter>
       }
@@ -274,7 +277,8 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
           (xml \ "hitPoint").text.toInt,
           (xml \ "moveRangePoint").text.toInt,
           (xml \ "attackPoint").text.toInt,
-          (xml \ "attackRangePoint").text.toInt
+          (xml \ "attackRangePoint").text.toInt,
+          (xml \ "cost").text.toInt
         ),
         (xml \ "imageFilename").text
       )
@@ -305,7 +309,8 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       toInt('hitPoint),
       toInt('moveRangePoint),
       toInt('attackPoint),
-      toInt('attackRangePoint)
+      toInt('attackRangePoint),
+      toInt('cost)
     )
   }
 
@@ -315,7 +320,8 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       ('hitPoint, p.hitPoint),
       ('moveRangePoint, p.moveRangePoint),
       ('attackPoint, p.attackPoint),
-      ('attackRangePoint, p.attackRangePoint)
+      ('attackRangePoint, p.attackRangePoint),
+      ('cost, p.cost)
     ) foreach {
       case (symbol, value) =>
       paramManager(symbol).foreach(_.setText(value.toString))

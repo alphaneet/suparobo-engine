@@ -4,13 +4,13 @@
     <layout>
         <name>canvas</name>
         <x>50</x>
-        <y>225</y>
+        <y>275</y>
         <width>200</width>
         <height>200</height>
         </layout><layout>
         <name>imageFilename</name>
         <x>75</x>
-        <y>475</y>
+        <y>500</y>
         <width>150</width>
         <height>25</height>
         </layout><layout>
@@ -22,31 +22,31 @@
         </layout><layout>
         <name>hitPoint</name>
         <x>50</x>
-        <y>100</y>
+        <y>75</y>
         <width>50</width>
         <height>25</height>
         </layout><layout>
         <name>attackPoint</name>
         <x>50</x>
-        <y>175</y>
+        <y>125</y>
         <width>50</width>
         <height>25</height>
         </layout><layout>
         <name>moveRangePoint</name>
         <x>200</x>
-        <y>100</y>
+        <y>75</y>
         <width>50</width>
         <height>25</height>
         </layout><layout>
         <name>attackRangePoint</name>
         <x>200</x>
-        <y>175</y>
+        <y>125</y>
         <width>50</width>
         <height>25</height>
         </layout><layout>
         <name>name</name>
         <x>50</x>
-        <y>35</y>
+        <y>25</y>
         <width>200</width>
         <height>25</height>
         </layout><layout>
@@ -73,5 +73,11 @@
         <y>550</y>
         <width>75</width>
         <height>30</height>
+        </layout><layout>
+        <name>cost</name>
+        <x>50</x>
+        <y>175</y>
+        <width>50</width>
+        <height>25</height>
         </layout>
     </layouts>
