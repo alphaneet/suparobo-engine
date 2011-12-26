@@ -75,6 +75,12 @@
         <height>30</height>
         </layout><layout>
         <name>cost</name>
+        <x>200</x>
+        <y>175</y>
+        <width>50</width>
+        <height>25</height>
+        </layout><layout>
+        <name>guardPoint</name>
         <x>50</x>
         <y>175</y>
         <width>50</width>

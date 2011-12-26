@@ -8,7 +8,7 @@
         <cost>4</cost>
         <imageFilename>reimu</imageFilename>
         </parameter><parameter>
-        <name>マリサ</name>
+        <name>魔理沙</name>
         <hitPoint>300</hitPoint>
         <moveRangePoint>5</moveRangePoint>
         <attackPoint>20</attackPoint>
@@ -16,7 +16,7 @@
         <cost>4</cost>
         <imageFilename>marisa</imageFilename>
         </parameter><parameter>
-        <name>ヨウム</name>
+        <name>妖夢</name>
         <hitPoint>500</hitPoint>
         <moveRangePoint>5</moveRangePoint>
         <attackPoint>100</attackPoint>

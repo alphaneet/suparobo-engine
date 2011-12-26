@@ -23,6 +23,7 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     moveRangePoint: Int,
     attackPoint: Int,
     attackRangePoint: Int,
+    guardPoint: Int,
     cost: Int
   ) extends NotNull
 
@@ -123,6 +124,7 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       ('moveRangePoint, "移動力", 0, 20),
       ('attackPoint, "攻撃力", 0, 9999),
       ('attackRangePoint, "攻撃範囲", 0, 20),
+      ('guardPoint, "防御力", 0, 9999),
       ('cost, "コスト", 1, 10)
     ) foreach {
       case (symbol, text, min, max) =>
@@ -271,14 +273,23 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     
     (scala.xml.XML.loadFile(filename) \ "parameter").foreach {
       xml =>
+      def toInt(name: String): Int = {
+        try {
+          (xml \ name).text.toInt
+        } catch {
+          case _ => 0
+        }
+      }
+      
       create(
         Parameter(
           (xml \ "name").text,
-          (xml \ "hitPoint").text.toInt,
-          (xml \ "moveRangePoint").text.toInt,
-          (xml \ "attackPoint").text.toInt,
-          (xml \ "attackRangePoint").text.toInt,
-          (xml \ "cost").text.toInt
+          toInt("hitPoint"),
+          toInt("moveRangePoint"),
+          toInt("attackPoint"),
+          toInt("attackRangePoint"),
+          toInt("guardPoint"),
+          toInt("cost")
         ),
         (xml \ "imageFilename").text
       )
@@ -310,6 +321,7 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       toInt('moveRangePoint),
       toInt('attackPoint),
       toInt('attackRangePoint),
+      toInt('guardPoint),
       toInt('cost)
     )
   }
@@ -321,6 +333,7 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       ('moveRangePoint, p.moveRangePoint),
       ('attackPoint, p.attackPoint),
       ('attackRangePoint, p.attackRangePoint),
+      ('guardPoint, p.guardPoint),
       ('cost, p.cost)
     ) foreach {
       case (symbol, value) =>
