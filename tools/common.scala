@@ -48,6 +48,9 @@ trait EditorPApplet extends PApplet {
     if (tmp.endsWith("$")) tmp.init else tmp
   }
 
+  // TK: ここ古いのでいつか直す
+  // Layout と Config の XML は分かれている。
+  // screenSize は Layout の XML を見るようにする。
   val config = new ConfigXML("data/" + clazzName + ".xml")  
   val screenSize = new Dimension(config('width, 800), config('height, 600))
   
@@ -81,7 +84,7 @@ class EditorScene(val applet: EditorPApplet) extends Scene(applet) with MyUtil {
     (releasedFront: Int, pressedFront: Int, back: Int)
     (width: Int = 0, height: Int = 0, size: Int = 0)
     (x: Int, y: Int, text: Any)
-    (action: => Unit)
+    (action: => Unit): Button =
     {
       val txt = text.toString
       val labels = List(

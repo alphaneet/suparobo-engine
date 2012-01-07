@@ -1,24 +1,37 @@
 package com.github.alphaneet.suparobo_engine.tools
 
-object ParameterEditor extends EditorPApplet {
-  def createEditorScene = new ParameterEditorScene(this)
+object CharactersEditor extends EditorPApplet {
+  def createEditorScene = new CharactersEditorScene(this)
 }
 
-class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
+class CharactersEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   editor =>
-    
+
+  import java.awt.{ Rectangle }
   import processing.core.{ PImage, PConstants }
   import com.github.alphaneet.processing.{
     ListManager,
     TextManager
   }
 
+  val CONFIG_PATH = DATA_PATH + "CharactersEditorConfig.xml"
+  val config = new ConfigXML(CONFIG_PATH)
+  val layout = new LayoutXML(DATA_PATH + "CharactersEditorLayout.xml")
+  
   val SCROLL_WIDTH = 20
-  val IMAGE_DIR = "./data/"
   val IMAGE_EXT = ".png"
 
+  def imageDir = paramManager.toText('imageDir)
+  def dataDir  = paramManager.toText('dataDir)
+  def dataFilename = paramManager.toText('dataFilename)
+  def dataFilePath = {
+    val dir = if (dataDir.isEmpty) "." else dataDir
+    dir + java.io.File.separator + dataFilename
+  }
+  def isDataFilePathEmpty = dataDir.isEmpty && dataFilename.isEmpty
+
   case class Parameter(
-    name: String,
+    id: Int,
     hitPoint: Int,
     moveRangePoint: Int,
     attackPoint: Int,
@@ -27,15 +40,21 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     cost: Int
   ) extends NotNull
 
+  case class Profile(
+    id: Int,
+    name: String,
+    symbol: String
+  )
+
   case class Pack(
-    private var _param: Parameter,
-    listButton: listManager.Button,
-    var imageFilename: String
+    var param: Parameter,
+    private var _profile: Profile,
+    listButton: listManager.Button
   ) extends NotNull {
-    def param = _param
-    def param_=(param: Parameter) {
-      _param = param
-      listButton.images = createListButtonImages(param.name)
+    def profile = _profile
+    def profile_=(profile: Profile) {
+      _profile = profile
+      listButton.images = createListButtonImages(profile.name)
     }
   }
 
@@ -43,8 +62,7 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     def findByListButton(listButton: listManager.Button): Option[Pack] =
       find(_.listButton == listButton)
   }
-  
-  val layout = new LayoutXML(applet.config.elem)
+
   val buttonManager = new ButtonManagerEx
   val paramManager  = new TextManager(applet)
   val listManager   = new ListManager(applet) {
@@ -61,10 +79,8 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     val centerY = rect.y + (rect.height >> 1)
     
     def update(filename: String) {
-      paramManager('imageFilename).foreach {
-        _.setText(filename)
-      }
-      image = Option(applet.loadImage(imagePath(filename)))
+      val path = imageDir + java.io.File.separator + filename + IMAGE_EXT
+      image = Option(applet.loadImage(path))
     }
     
     def draw() {
@@ -79,6 +95,96 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
         applet.imageMode(PConstants.CORNER)
       }
     }
+  }
+  
+  object dialog {
+    val buttonWidth   = 60
+    val buttonHieght  = 20
+    val buttonCenterX = (applet.width  >> 1) - (buttonWidth  >> 1)
+    val buttonCenterY = (applet.height >> 1) - (buttonHieght >> 1)
+      
+    private abstract sealed class Mode extends ButtonManagerEx {
+      private var _label: Option[PImage] = None
+      def label = _label
+      def label_=(msg: String) {
+        val image = gg.createLabel(
+          msg,
+          applet.width,
+          height = 50,
+          size = 12,
+          frontColor = 0xFFFFFF
+        )
+        
+        _label = Option(image)
+      }
+            
+      val actionButton: Button
+      val createButton = createEasyButton(
+        releasedFront = 0x473027,
+        pressedFront  = 0xFFFFFF,
+        back = 0xD9CEAD
+      )(
+        width  = buttonWidth,
+        height = buttonHieght,
+        size   = 15
+      )_
+
+      override def draw() {
+        applet.fill(163, 109, 92)
+        applet.stroke(128, 69, 62)
+
+        val halfW = applet.width  >> 1
+        val halfH = applet.height >> 1
+
+        val (w, h) = (applet.width - 20, 100)
+        val left = halfW - (w >> 1)
+        val top  = halfH - (h >> 1)
+        
+        applet.rect(left, top, w, h)
+
+        super.draw()
+
+        label foreach { applet.image(_, 0, halfH - 50) }
+      }
+    }
+
+    private object OK extends Mode {
+      val actionButton = createButton(buttonCenterX, buttonCenterY + 20, "OK") {
+        close()
+      }
+    }
+
+    private object OKCancel extends Mode {
+      val actionButton = createButton(buttonCenterX - 50, buttonCenterY + 20, "OK") {
+        close()
+      }
+      createButton(buttonCenterX + 50, buttonCenterY + 20, "Cancel") { close() }
+    }
+    
+    private var _isOpen = false
+    def isOpen = _isOpen
+    private def open(m: Mode, msg: String, action: () => Unit) {
+      _isOpen = true
+      mode = m
+      mode.actionButton.action {
+        close()
+        action()
+      }
+      mode.label = msg
+    }
+    private def close() { _isOpen = false }
+    
+    private var mode: Mode = OK
+    
+    def confirm(msg: String)(action: => Unit) {
+      open(OKCancel, msg, action _)
+    }
+    def message(msg: String, action: => Unit = {}) {
+      open(OK, msg, action _)
+    }
+
+    def checkMouse(): Unit = mode.checkMouse()
+    def draw(): Unit = mode.draw()
   }
   
   // initialize
@@ -129,8 +235,8 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     ) foreach {
       case (symbol, text, min, max) =>
       val rect = layout.rect(symbol)
-
-      registerMenuLabel(text, rect)
+      
+      registerLabel(text, rect, size = 15, diff = new Rectangle(-25, -25, 50, 0))
       
       val intField = new paramManager.IntField(symbol, min, max) {
         override def updateValue(): Unit = editor.update()
@@ -148,49 +254,61 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
         case (arrow, addX, addValue) =>
         createButton(20, 20, 15)(rect.x + addX, rect.y + 2, arrow.toChar) {
           intField.value += addValue
-          editor.update()
+         editor.update()
         }
       }
     }
 
+    val emptyFunc = () => {}
     List(
       ('name, "名前", update _),
-      ('imageFilename, "画像ファイル", loadImage _)
+      ('symbol, "シンボル名", update _),
+      ('imageDir, "イメージディレクトリ", loadImage _),
+      ('dataDir, "データディレクトリ", emptyFunc),
+      ('dataFilename, "ファイル名", emptyFunc)
     ) foreach {
       case (symbol, text, f) =>
       layout(symbol) {
         rect =>
-        registerMenuLabel(text, rect)
+        registerLabel(text, rect, size = 15, diff = new Rectangle(0, -25, 0, 0))
         new paramManager.ValidateField(symbol) {
           override def updateValue(): Unit = f()
           setBounds(rect)
+          setText(config(symbol, ""))
         }
       }
     }
 
     List(
-      (IMAGE_DIR, -80),
-      (IMAGE_EXT, 120)
+      ('parameter, "パラメーター"),
+      ('profile, "プロフィール"),
+      ('menu, "メニュー")
     ) foreach {
-      case (text, addX) =>
-      layout('imageFilename) {
-        rect =>
-        new Image(
-          rect.x + addX, rect.y,
-          gg.createLabel(text, 100, rect.height, size = 18, frontColor = 0xFFFFFF)
-        )
+      case (symbol, text) =>
+      layout(symbol) {
+        registerLabel(text, _, size = 20)
       }
     }
+
+    if (!isDataFilePathEmpty) {
+      try { _load() } catch { case _ => }
+    }    
   }
 
-  def registerMenuLabel(text: String, rect: java.awt.Rectangle) {
+  def registerLabel(
+    text: String,
+    rect: Rectangle,
+    size: Int,
+    diff: Rectangle = new Rectangle()
+  ) {
     new Image(
-      rect.x - 25, rect.y - 25,
+      rect.x + diff.x,
+      rect.y + diff.y,
       gg.createLabel(
         text,
-        rect.width + 50,
-        rect.height,
-        size = 15,
+        rect.width  + diff.width,
+        rect.height + diff.height,
+        size = size,
         frontColor = 0xFFFFFF
       )
     )
@@ -204,22 +322,24 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     List(0x8A4442, 0xD9CEAD, 0x473027).map(createImage)
   }
 
-  def create() { create(parameter, focus.map(_.imageFilename).getOrElse("")) }
-  def create(p: Parameter, imageFilename: String) {
+  def create() { create(parameter, profile) }
+  def create(param: Parameter, profile: Profile) {
     def action(listButton: listManager.Button) {
       listManager.focus = Option(listButton)
       packs.findByListButton(listButton).foreach {
         pack =>
-        editor.parameter = pack.param        
-        canvas.update(pack.imageFilename)
+        editor.parameter = pack.param
+        editor.profile   = pack.profile
+        canvas.update(pack.profile.symbol)
       }
     }
-    
-    val listButton = listManager.register(createListButtonImages(p.name)).action {
+
+    val images = createListButtonImages(profile.name)
+    val listButton = listManager.register(images).action {
       action(_)
     }
 
-    packs += Pack(p, listButton, imageFilename)
+    packs += Pack(param, profile, listButton)
     if (listManager.focus.isEmpty) { action(listButton) }
   }
 
@@ -231,7 +351,9 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
 
   def update() {
     focus foreach {
-      _.param = parameter
+      pack =>
+      pack.param   = parameter
+      pack.profile = profile
     }
   }
 
@@ -241,58 +363,125 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     }
   }
 
-  def save() {
-    val filename = applet.selectOutput()
-    if (filename == null) return
-    val xml = <parameters>
+  def save(): Unit = {    
+    dialog.confirm(dataDir + " に保存しますか？") {
+      try {
+        _save()
+      } catch {
+        case ex =>
+          Console.err.println(ex)
+          dialog.message(ex.toString)
+      }
+    }
+  }
+  
+  private def _save() {    
+    val parametersXML = <parameters>
     {
-      packs map {
-        pack =>
+      packs.zipWithIndex map {
+        case (pack, index) =>
         val p = pack.param
+        val id = index + 1
         <parameter>
-        <name>{ p.name }</name>
+        <id>{ id }</id>
         <hitPoint>{ p.hitPoint }</hitPoint>
         <moveRangePoint>{ p.moveRangePoint }</moveRangePoint>
         <attackPoint>{ p.attackPoint }</attackPoint>
         <attackRangePoint>{ p.attackRangePoint }</attackRangePoint>
+        <guardPoint>{ p.guardPoint }</guardPoint>
         <cost>{ p.cost }</cost>
-        <imageFilename>{ pack.imageFilename }</imageFilename>
         </parameter>
       }
     }
     </parameters>
 
-    scala.xml.XML.save(filename, xml, "utf-8")
+    val profilesXML = <profiles>
+    {
+      packs.zipWithIndex map {
+        case (pack, index) =>
+        val p = pack.profile
+        val id = index + 1
+        <profile>
+        <id>{ id }</id>
+        <name>{ p.name }</name>
+        <symbol>{ p.symbol }</symbol>
+        </profile>
+      }
+    }
+    </profiles>
+      
+    val saveXML = scala.xml.XML.save(_: String, _: scala.xml.Elem, "utf-8")
+    
+    saveXML(dataFilePath + "Parameters.xml", parametersXML)
+    saveXML(dataFilePath + "Profiles.xml",   profilesXML)
+    saveXML(
+      CONFIG_PATH,
+      <config>
+      <dataDir>{ dataDir }</dataDir>
+      <dataFilename>{ dataFilename }</dataFilename>
+      <imageDir>{ imageDir }</imageDir>
+      </config>
+    )
   }
 
-  def load() {
-    val filename = applet.selectInput()
-    if (filename == null) return
-
-    clear()
-    
-    (scala.xml.XML.loadFile(filename) \ "parameter").foreach {
-      xml =>
-      def toInt(name: String): Int = {
-        try {
-          (xml \ name).text.toInt
-        } catch {
-          case _ => 0
-        }
+  def load(): Unit = {
+    dialog.confirm(dataDir + " から読み込みますか？") {
+      try {
+        _load()
+      } catch {
+        case ex =>
+          Console.err.println(ex)          
+          dialog.message(ex.toString)
       }
-      
-      create(
-        Parameter(
-          (xml \ "name").text,
-          toInt("hitPoint"),
-          toInt("moveRangePoint"),
-          toInt("attackPoint"),
-          toInt("attackRangePoint"),
-          toInt("guardPoint"),
-          toInt("cost")
-        ),
-        (xml \ "imageFilename").text
+    }
+  }
+  
+  private def _load() {
+    import scala.xml.Node
+    
+    clear()
+
+    def loadXML(filename: String) = {
+      scala.xml.XML.loadFile(dataFilePath + filename)
+    }
+
+    def Node2Str(node: Node)(name: String): String = (node \ name).text
+    def Node2Int(node: Node)(name: String): Int = try {
+      (node \ name).text.toInt
+    } catch {
+      case _ => 0
+    }      
+    
+    val parameters = (loadXML("Parameters.xml") \ "parameter").map {
+      node =>
+      val toInt = Node2Int(node)_
+      Parameter(
+        toInt("id"),
+        toInt("hitPoint"),
+        toInt("moveRangePoint"),
+        toInt("attackPoint"),
+        toInt("attackRangePoint"),
+        toInt("guardPoint"),
+        toInt("cost")        
       )
+    }
+
+    val profiles = (loadXML("Profiles.xml") \ "profile").map {
+      node =>
+      val toInt = Node2Int(node)_
+      val toStr = Node2Str(node)_
+      Profile(
+        toInt("id"),
+        toStr("name"),
+        toStr("symbol")
+      )
+    }
+
+    parameters foreach {
+      param =>
+      profiles.find(_.id == param.id) foreach {
+        create(param, _)
+      }
     }
   }
 
@@ -301,22 +490,17 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     packs.clear()
   }
 
-  def imagePath(filename: String): String =
-    IMAGE_DIR + filename + IMAGE_EXT
-    
   def loadImage() {
     focus foreach {
       pack =>
-      val filename = paramManager.toText('imageFilename)
-      pack.imageFilename = filename
-      canvas.update(filename)
+      canvas.update(pack.profile.symbol)
     }
   }
 
   def parameter: Parameter = {
-    import paramManager.{ toInt, toText }
+    import paramManager.toInt
     Parameter(
-      toText('name),
+      0,
       toInt('hitPoint),
       toInt('moveRangePoint),
       toInt('attackPoint),
@@ -328,7 +512,6 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
 
   def parameter_=(p: Parameter) {
     List(
-      ('name, p.name),
       ('hitPoint, p.hitPoint),
       ('moveRangePoint, p.moveRangePoint),
       ('attackPoint, p.attackPoint),
@@ -340,11 +523,29 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       paramManager(symbol).foreach(_.setText(value.toString))
     }      
   }
+
+  def profile: Profile = {
+    import paramManager.toText
+    Profile(
+      0,
+      toText('name),
+      toText('symbol)
+    )
+  }
+
+  def profile_=(p: Profile) = {
+    List(
+      ('name, p.name),
+      ('symbol, p.symbol)
+    ) foreach {
+      case (symbol, value) =>
+      paramManager(symbol).foreach(_.setText(value.toString))
+    }
+  }
   
   override def draw() {
     applet.background(156, 150, 139)
     
-    listManager.checkMouse()
     listManager.draw()
 
     listManager.focus.foreach {
@@ -354,11 +555,18 @@ class ParameterEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       applet.rect(focus.x, focus.y, focus.width, focus.height)
     }
 
-    buttonManager.checkMouse()
     buttonManager.draw()
     
     images.draw()
     canvas.draw()
+
+    if (dialog.isOpen) {
+      dialog.draw()
+      dialog.checkMouse()
+    } else {
+      buttonManager.checkMouse()
+      listManager.checkMouse()
+    }
   }
   
   override def mouseWheelMoved() {

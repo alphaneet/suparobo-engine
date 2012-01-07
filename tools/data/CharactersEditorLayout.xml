@@ -1,21 +1,21 @@
 <layouts>
-    <width>550</width>
+    <width>800</width>
     <height>600</height>
     <layout>
         <name>canvas</name>
-        <x>50</x>
-        <y>275</y>
+        <x>300</x>
+        <y>175</y>
         <width>200</width>
         <height>200</height>
         </layout><layout>
-        <name>imageFilename</name>
-        <x>75</x>
-        <y>500</y>
-        <width>150</width>
+        <name>dataDir</name>
+        <x>50</x>
+        <y>450</y>
+        <width>200</width>
         <height>25</height>
         </layout><layout>
         <name>list</name>
-        <x>325</x>
+        <x>550</x>
         <y>25</y>
         <width>200</width>
         <height>500</height>
@@ -45,19 +45,19 @@
         <height>25</height>
         </layout><layout>
         <name>name</name>
-        <x>50</x>
-        <y>25</y>
+        <x>300</x>
+        <y>75</y>
         <width>200</width>
         <height>25</height>
         </layout><layout>
         <name>create</name>
-        <x>325</x>
+        <x>550</x>
         <y>550</y>
         <width>75</width>
         <height>30</height>
         </layout><layout>
         <name>delete</name>
-        <x>450</x>
+        <x>675</x>
         <y>550</y>
         <width>75</width>
         <height>30</height>
@@ -84,6 +84,42 @@
         <x>50</x>
         <y>175</y>
         <width>50</width>
+        <height>25</height>
+        </layout><layout>
+        <name>parameter</name>
+        <x>50</x>
+        <y>20</y>
+        <width>200</width>
+        <height>25</height>
+        </layout><layout>
+        <name>profile</name>
+        <x>300</x>
+        <y>20</y>
+        <width>200</width>
+        <height>25</height>
+        </layout><layout>
+        <name>symbol</name>
+        <x>300</x>
+        <y>125</y>
+        <width>200</width>
+        <height>25</height>
+        </layout><layout>
+        <name>imageDir</name>
+        <x>300</x>
+        <y>425</y>
+        <width>200</width>
+        <height>25</height>
+        </layout><layout>
+        <name>dataFilename</name>
+        <x>50</x>
+        <y>500</y>
+        <width>200</width>
+        <height>25</height>
+        </layout><layout>
+        <name>menu</name>
+        <x>50</x>
+        <y>395</y>
+        <width>200</width>
         <height>25</height>
         </layout>
     </layouts>
