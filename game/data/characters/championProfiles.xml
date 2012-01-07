@@ -1,0 +1,15 @@
+<profiles>
+    <profile>
+        <id>1</id>
+        <name>霊夢</name>
+        <symbol>reimu</symbol>
+        </profile><profile>
+        <id>2</id>
+        <name>魔理沙</name>
+        <symbol>marisa</symbol>
+        </profile><profile>
+        <id>3</id>
+        <name>妖夢</name>
+        <symbol>youmu</symbol>
+        </profile>
+    </profiles>

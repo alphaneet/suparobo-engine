@@ -4,25 +4,25 @@
     <layout>
         <name>deck01</name>
         <x>675</x>
-        <y>200</y>
+        <y>125</y>
         <width>100</width>
         <height>100</height>
         </layout><layout>
         <name>deck02</name>
         <x>675</x>
-        <y>300</y>
+        <y>225</y>
         <width>100</width>
         <height>100</height>
         </layout><layout>
         <name>deck03</name>
         <x>675</x>
-        <y>400</y>
+        <y>325</y>
         <width>100</width>
         <height>100</height>
         </layout><layout>
-        <name>save</name>
+        <name>back</name>
         <x>675</x>
-        <y>525</y>
+        <y>550</y>
         <width>100</width>
         <height>25</height>
         </layout><layout>
@@ -30,11 +30,11 @@
         <x>675</x>
         <y>25</y>
         <width>100</width>
-        <height>100</height>
+        <height>50</height>
         </layout><layout>
         <name>deckLabel</name>
         <x>675</x>
-        <y>175</y>
+        <y>100</y>
         <width>100</width>
         <height>25</height>
         </layout><layout>
@@ -74,28 +74,40 @@
         <width>100</width>
         <height>25</height>
         </layout><layout>
-        <name>heroes</name>
+        <name>champions</name>
         <x>175</x>
         <y>50</y>
         <width>450</width>
         <height>150</height>
         </layout><layout>
-        <name>playersLabel</name>
+        <name>minionsLabel</name>
         <x>304</x>
         <y>225</y>
         <width>200</width>
         <height>25</height>
         </layout><layout>
-        <name>heroesLabel</name>
+        <name>championsLabel</name>
         <x>300</x>
         <y>25</y>
         <width>200</width>
         <height>25</height>
         </layout><layout>
-        <name>players</name>
+        <name>minions</name>
         <x>175</x>
         <y>250</y>
         <width>450</width>
         <height>300</height>
+        </layout><layout>
+        <name>save</name>
+        <x>675</x>
+        <y>450</y>
+        <width>100</width>
+        <height>25</height>
+        </layout><layout>
+        <name>clear</name>
+        <x>675</x>
+        <y>500</y>
+        <width>100</width>
+        <height>25</height>
         </layout>
     </layouts>
