@@ -1,27 +1,27 @@
 <parameters>
     <parameter>
-        <name>霊夢</name>
+        <id>1</id>
         <hitPoint>1000</hitPoint>
         <moveRangePoint>3</moveRangePoint>
         <attackPoint>50</attackPoint>
         <attackRangePoint>4</attackRangePoint>
+        <guardPoint>30</guardPoint>
         <cost>4</cost>
-        <imageFilename>reimu</imageFilename>
         </parameter><parameter>
-        <name>魔理沙</name>
+        <id>2</id>
         <hitPoint>300</hitPoint>
         <moveRangePoint>5</moveRangePoint>
         <attackPoint>20</attackPoint>
         <attackRangePoint>8</attackRangePoint>
+        <guardPoint>0</guardPoint>
         <cost>4</cost>
-        <imageFilename>marisa</imageFilename>
         </parameter><parameter>
-        <name>妖夢</name>
+        <id>3</id>
         <hitPoint>500</hitPoint>
         <moveRangePoint>5</moveRangePoint>
         <attackPoint>100</attackPoint>
         <attackRangePoint>2</attackRangePoint>
+        <guardPoint>0</guardPoint>
         <cost>4</cost>
-        <imageFilename>youmu</imageFilename>
         </parameter>
     </parameters>

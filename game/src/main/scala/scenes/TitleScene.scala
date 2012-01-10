@@ -1,8 +1,6 @@
 package com.github.alphaneet.suparobo_engine.game.scenes
 
 case class TitleScene(applet: PApplet) extends Scene(applet) {
-  scene =>
-
   val layout = new LayoutXML(LayoutsPath + "title.xml")
   val buttonManager = new ButtonManager(applet)
   val gg = new GraphicsGenerator(applet)
@@ -50,7 +48,7 @@ case class TitleScene(applet: PApplet) extends Scene(applet) {
 
   def start() { println("未実装") } 
   def network() { println("未実装") }
-  def deck() { DeckScene(applet) }
+  def deck() { DeckMakeScene(applet) }
   def replay() { println("未実装") }
   def exit(): Unit = applet.exit()
     
@@ -62,8 +60,4 @@ case class TitleScene(applet: PApplet) extends Scene(applet) {
 
     title.draw()
   }
-
-  override def keyPressed() {
-    if (applet.key == 'k') DeckScene(applet)
-  }  
 }

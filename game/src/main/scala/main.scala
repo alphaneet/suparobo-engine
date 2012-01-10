@@ -6,6 +6,7 @@ object Main extends com.github.alphaneet.processing.PApplet {
     size(processing.core.PConstants.P2D)
     frameRate(24)
     title = "スーパー東方大戦"
-    com.github.alphaneet.suparobo_engine.game.scenes.TitleScene(this)
+//    com.github.alphaneet.suparobo_engine.game.scenes.TitleScene(this)
+    com.github.alphaneet.suparobo_engine.game.scenes.DeckMakeScene(this)
   }
 }
