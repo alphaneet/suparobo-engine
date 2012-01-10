@@ -1,12 +1,11 @@
-package com.github.alphaneet.suparobo_engine.game
+package com.github.alphaneet.suparobo_engine
 
-object Main extends com.github.alphaneet.processing.PApplet {
+object Main extends PApplet {
   val screenSize = new Dimension(800, 600)
   override def setup() {
     size(processing.core.PConstants.P2D)
     frameRate(24)
     title = "スーパー東方大戦"
-//    com.github.alphaneet.suparobo_engine.game.scenes.TitleScene(this)
-    com.github.alphaneet.suparobo_engine.game.scenes.DeckMakeScene(this)
+    DeckMakeScene(this)
   }
 }

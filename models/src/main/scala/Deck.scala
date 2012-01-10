@@ -1,4 +1,4 @@
-package com.github.alphaneet.suparobo_engine.game.models
+package com.github.alphaneet.suparobo_engine
 
 // チャンピオンをセットしてない場合
 class NoSuchChampionException(msg: String = "") extends Exception(msg)

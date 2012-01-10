@@ -1,12 +1,6 @@
-package com.github.alphaneet.suparobo_engine.game.scenes
+package com.github.alphaneet.suparobo_engine
 
 case class DeckMakeScene(applet: PApplet) extends Scene(applet) {
-  import com.github.alphaneet.suparobo_engine.game.models.{
-    CharacterParameter,
-    Champion,
-    Minion
-  }
-  
   val layout = new LayoutXML(LayoutsPath + "deck.xml")
   val buttonManager = new ButtonManager(applet)
   val gg = new GraphicsGenerator(applet)

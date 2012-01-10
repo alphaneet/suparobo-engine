@@ -1,6 +1,6 @@
-package com.github.alphaneet.suparobo_engine.game
+package com.github.alphaneet
 
-package object models {
+package object suparobo_engine {
   type FunSuite = org.scalatest.FunSuite
   type ShouldMatchers = org.scalatest.matchers.ShouldMatchers
   

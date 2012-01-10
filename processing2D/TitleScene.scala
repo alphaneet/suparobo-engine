@@ -1,4 +1,4 @@
-package com.github.alphaneet.suparobo_engine.game.scenes
+package com.github.alphaneet.suparobo_engine
 
 case class TitleScene(applet: PApplet) extends Scene(applet) {
   val layout = new LayoutXML(LayoutsPath + "title.xml")

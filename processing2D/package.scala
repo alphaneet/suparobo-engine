@@ -1,10 +1,6 @@
-package com.github.alphaneet.suparobo_engine.game
+package com.github.alphaneet
 
-package object scenes {
-  import com.github.alphaneet.suparobo_engine.game.models.{
-    Deck,
-    CharacterParameter
-  }
+package object suparobo_engine {
 
   // TK: 大文字にするお
   val DataPath    = "data/"
@@ -20,11 +16,12 @@ package object scenes {
   
   type PImage = processing.core.PImage  
 
-  type ButtonManager = com.github.alphaneet.processing.ButtonManager
-  type GraphicsGenerator = com.github.alphaneet.processing.GraphicsGenerator  
-  type LayoutXML = com.github.alphaneet.processing.LayoutXML
-  type PApplet = com.github.alphaneet.processing.PApplet
-  type Scene = com.github.alphaneet.processing.Scene  
+//  import com.github.alphaneet.scala_processing
+  type PApplet = com.github.alphaneet.scala_processing.PApplet
+  type Scene = com.github.alphaneet.scala_processing.Scene  
+  type ButtonManager = com.github.alphaneet.scala_processing.ButtonManager
+  type GraphicsGenerator = com.github.alphaneet.scala_processing.GraphicsGenerator  
+  type LayoutXML = com.github.alphaneet.scala_processing.LayoutXML
   
   def loadCharacterParameters(filename: String): List[CharacterParameter] = {
     (scala.xml.XML.loadFile(filename) \ "parameter").map {
