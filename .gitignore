@@ -1,3 +1,13 @@
-project/
-target/
+/project/target/*
+/target/*
+
+/models/project/target/*
+/models/target/*
+
+/processing2D/project/target/*
+/processing2D/target/*
+
+/tools/project/target/*
+/tools/target/*
+
 .DS_Store
