@@ -45,6 +45,7 @@ package object scenes {
     }.toList
   }
 
-  def loadCharacterFilenames(filename: String): Map[String, String] = {
+  def loadCharacterProfiles(filename: String): Map[String, String] = {
+    Map("" -> "")
   }  
 }
