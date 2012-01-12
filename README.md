@@ -11,7 +11,7 @@
 &lt;home_dir&gt; example. my home dir is "Users/alphaneet"
 &lt;id&gt; is https://github.com/alphaneet/scala-processing download dir
 
-but it is uncool lol
+but it is uncool lol.
 please other good idea.
 
 # models
