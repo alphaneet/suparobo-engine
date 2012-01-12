@@ -1,6 +1,6 @@
-package com.github.alphaneet.suparobo_engine
+package com.github.alphaneet.suparobo
 
-case class TitleScene(applet: PApplet) extends Scene(applet) {
+case class TitleScene(applet: SPApplet) extends Scene(applet) {
   val layout = new LayoutXML(LayoutsPath + "title.xml")
   val buttonManager = new ButtonManager(applet)
   val gg = new GraphicsGenerator(applet)

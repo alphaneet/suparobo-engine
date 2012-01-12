@@ -1,4 +1,4 @@
-package com.github.alphaneet.suparobo_engine
+package com.github.alphaneet.suparobo
 
 class DeckSuite extends FunSuite with ShouldMatchers {
   test("チャンピオンは必ず一人だけセットする必要がある。") {

@@ -1,6 +1,6 @@
-package com.github.alphaneet.suparobo_engine
+package com.github.alphaneet.suparobo
 
-case class DeckMakeScene(applet: PApplet) extends Scene(applet) {
+case class DeckMakeScene(applet: SPApplet) extends Scene(applet) {
   val layout = new LayoutXML(LayoutsPath + "deck.xml")
   val buttonManager = new ButtonManager(applet)
   val gg = new GraphicsGenerator(applet)

@@ -1,4 +1,4 @@
-package com.github.alphaneet.suparobo_engine.tools
+package com.github.alphaneet.suparobo
 
 object CharactersEditor extends EditorPApplet {
   def createEditorScene = new CharactersEditorScene(this)
@@ -9,10 +9,6 @@ class CharactersEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
 
   import java.awt.{ Rectangle }
   import processing.core.{ PImage, PConstants }
-  import com.github.alphaneet.processing.{
-    ListManager,
-    TextManager
-  }
 
   val CONFIG_PATH = DATA_PATH + "CharactersEditorConfig.xml"
   val config = new ConfigXML(CONFIG_PATH)

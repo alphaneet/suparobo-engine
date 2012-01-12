@@ -1,6 +1,6 @@
 package com.github.alphaneet
 
-package object suparobo_engine {
+package object suparobo {
 
   // TK: 大文字にするお
   val DataPath    = "data/"
@@ -14,17 +14,17 @@ package object suparobo_engine {
 
   type Rectangle = java.awt.Rectangle
   
-  type PImage = processing.core.PImage  
+  type PImage = _root_.processing.core.PImage  
 
 //  import com.github.alphaneet.scala_processing
-  type PApplet = com.github.alphaneet.scala_processing.PApplet
-  type Scene = com.github.alphaneet.scala_processing.Scene  
-  type ButtonManager = com.github.alphaneet.scala_processing.ButtonManager
-  type GraphicsGenerator = com.github.alphaneet.scala_processing.GraphicsGenerator  
-  type LayoutXML = com.github.alphaneet.scala_processing.LayoutXML
+  type SPApplet = com.github.alphaneet.scala.processing.SPApplet
+  type Scene = com.github.alphaneet.scala.processing.Scene  
+  type ButtonManager = com.github.alphaneet.scala.processing.ButtonManager
+  type GraphicsGenerator = com.github.alphaneet.scala.processing.GraphicsGenerator  
+  type LayoutXML = com.github.alphaneet.scala.processing.LayoutXML
   
   def loadCharacterParameters(filename: String): List[CharacterParameter] = {
-    (scala.xml.XML.loadFile(filename) \ "parameter").map {
+    (_root_.scala.xml.XML.loadFile(filename) \ "parameter").map {
       xml =>
       def toInt(name: String): Int = try {
         (xml \ name).text.toInt

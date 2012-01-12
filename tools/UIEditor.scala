@@ -1,4 +1,4 @@
-package com.github.alphaneet.suparobo_engine.tools
+package com.github.alphaneet.suparobo
 
 object UIEditor extends EditorPApplet {
   def createEditorScene = new UIEditorScene(this)
@@ -8,11 +8,6 @@ class UIEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   editor =>
     
   import processing.core.{ PImage, PConstants }
-  import com.github.alphaneet.processing.{
-    ListManager,
-    TextManager,
-    ButtonManager
-  }
 
   // TK: MENU_(LEFT or RIGHT)_X の方がいいかも？
   val LEFT_MENU_X   = 30

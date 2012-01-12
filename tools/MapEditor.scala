@@ -1,4 +1,4 @@
-package com.github.alphaneet.suparobo_engine.tools
+package com.github.alphaneet.suparobo
 
 object MapEditor extends EditorPApplet {
   def createEditorScene = new MapEditorScene(this)

@@ -1,6 +1,6 @@
-package com.github.alphaneet.suparobo_engine
+package com.github.alphaneet.suparobo
 
-object Main extends PApplet {
+object Main extends SPApplet {
   val screenSize = new Dimension(800, 600)
   override def setup() {
     size(processing.core.PConstants.P2D)

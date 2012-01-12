@@ -1,9 +1,8 @@
-package com.github.alphaneet.suparobo_engine.tools
-import com.github.alphaneet.processing.{
-  PApplet,
+package com.github.alphaneet.suparobo
+import com.github.alphaneet.scala.processing.{
+  SPApplet,
   Scene,
   MyUtil,
-  ButtonManager,
   GraphicsGenerator
 }
 
@@ -42,7 +41,7 @@ class ConfigXML(val elem: scala.xml.NodeSeq) {
   }
 }
 
-trait EditorPApplet extends PApplet {
+trait EditorPApplet extends SPApplet {
   val clazzName = {
     val tmp = getClass.getSimpleName
     if (tmp.endsWith("$")) tmp.init else tmp
@@ -69,7 +68,7 @@ class EditorScene(val applet: EditorPApplet) extends Scene(applet) with MyUtil {
     
   import processing.core.{ PImage, PVector }
 
-  type LayoutXML = com.github.alphaneet.processing.LayoutXML
+  type LayoutXML = com.github.alphaneet.scala.processing.LayoutXML
     
   implicit val gg = new GraphicsGenerator(applet)
   val images = new scala.collection.mutable.ArrayBuffer[Image] {

@@ -6,5 +6,6 @@
 
 /tools/project/target/*
 /tools/target/*
+/tools/data/CharactersEditorConfig.xml
 
 .DS_Store

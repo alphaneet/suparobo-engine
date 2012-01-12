@@ -1,4 +1,4 @@
-package com.github.alphaneet.suparobo_engine.tools
+package com.github.alphaneet.suparobo
 
 object DiagramEditor extends EditorPApplet {
   def createEditorScene = new DiagramEditorScene(this)
@@ -7,9 +7,6 @@ object DiagramEditor extends EditorPApplet {
 class DiagramEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   editor =>
     
-  import com.github.alphaneet.processing.{
-    TextManager
-  }
   import processing.core.{ PApplet, PConstants }
 
   val layout = new LayoutXML(applet.config.elem)  
