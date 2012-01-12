@@ -1,5 +1,5 @@
 package com.github.alphaneet.suparobo
-import com.github.alphaneet.scala.processing.{
+import com.github.alphaneet.scala_processing.{
   SPApplet,
   Scene,
   MyUtil,
@@ -68,7 +68,7 @@ class EditorScene(val applet: EditorPApplet) extends Scene(applet) with MyUtil {
     
   import processing.core.{ PImage, PVector }
 
-  type LayoutXML = com.github.alphaneet.scala.processing.LayoutXML
+  type LayoutXML = com.github.alphaneet.scala_processing.LayoutXML
     
   implicit val gg = new GraphicsGenerator(applet)
   val images = new scala.collection.mutable.ArrayBuffer[Image] {

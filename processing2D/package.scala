@@ -16,15 +16,15 @@ package object suparobo {
   
   type PImage = _root_.processing.core.PImage  
 
-//  import com.github.alphaneet.scala_processing
-  type SPApplet = com.github.alphaneet.scala.processing.SPApplet
-  type Scene = com.github.alphaneet.scala.processing.Scene  
-  type ButtonManager = com.github.alphaneet.scala.processing.ButtonManager
-  type GraphicsGenerator = com.github.alphaneet.scala.processing.GraphicsGenerator  
-  type LayoutXML = com.github.alphaneet.scala.processing.LayoutXML
+  import com.github.alphaneet._
+  type SPApplet = scala_processing.SPApplet
+  type Scene = scala_processing.Scene  
+  type ButtonManager = scala_processing.ButtonManager
+  type GraphicsGenerator = scala_processing.GraphicsGenerator  
+  type LayoutXML = scala_processing.LayoutXML
   
   def loadCharacterParameters(filename: String): List[CharacterParameter] = {
-    (_root_.scala.xml.XML.loadFile(filename) \ "parameter").map {
+    (scala.xml.XML.loadFile(filename) \ "parameter").map {
       xml =>
       def toInt(name: String): Int = try {
         (xml \ name).text.toInt

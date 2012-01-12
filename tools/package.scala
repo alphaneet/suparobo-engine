@@ -2,8 +2,8 @@ package com.github.alphaneet
 
 package object suparobo {
   val DATA_PATH = "data/"
-  type ListManager = com.github.alphaneet.scala.processing.ListManager
-  type TextManager = com.github.alphaneet.scala.processing.TextManager
-  type ButtonManager = com.github.alphaneet.scala.processing.ButtonManager
-
+  import com.github.alphaneet._
+  type ListManager   = scala_processing.ListManager
+  type TextManager   = scala_processing.TextManager
+  type ButtonManager = scala_processing.ButtonManager
 }
