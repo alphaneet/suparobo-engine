@@ -6,9 +6,9 @@ case class DeckMakeScene(applet: PApplet) extends Scene(applet) {
   val gg = new GraphicsGenerator(applet)
   val decks = (0 until MAX_DECK).map { Function.const( createDeck ) }
   var focus = decks(0)
-  
-  val champions = loadCharacterParameters(ParamsPath + "champions.xml")
-  val minions = loadCharacterParameters(ParamsPath + "minions.xml")
+
+  val champions = loadCharacterParameters(CHARACTERS_PATH + "championParameters.xml")
+  val minions = loadCharacterParameters(CHARACTERS_PATH + "minionParameters.xml")
   val characters = champions ++ minions
   val characterImages = characters map {
     param =>

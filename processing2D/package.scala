@@ -6,8 +6,8 @@ package object suparobo_engine {
   val DataPath    = "data/"
   val ImagesPath  = DataPath + "images/"
   val LayoutsPath = DataPath + "layouts/"
-  val ParamsPath  = DataPath + "params/"
-
+  val CHARACTERS_PATH = DataPath + "characters/"
+  
   val MAX_DECK = 3  
   val MAX_COST = 10
   def createDeck() = new Deck(MAX_COST)
