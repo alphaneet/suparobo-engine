@@ -51,6 +51,7 @@ class CharactersEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     def profile_=(profile: Profile) {
       _profile = profile
       listButton.images = createListButtonImages(profile.name)
+      canvas.update(profile.symbol)
     }
   }
 
