@@ -25,22 +25,33 @@ class DiagramEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
 
   object canvas {
     val rect = layout.rect('canvas)
+    
+    val centerX = rect.x + (rect.width  >> 1)
+    val centerY = rect.y + (rect.height >> 1)
+    
     var diagramType: DiagramType = CircleType
-    val renderer = applet.createGraphics(rect.width, rect.height, PConstants.JAVA2D)
+    var renderer = applet.createGraphics(rect.width, rect.height, PConstants.JAVA2D)
 
     update()
-    
-    def centerX = rect.width  >> 1
-    def centerY = rect.height >> 1
 
     def update() {
       import paramManager.toInt
+      def createGraphics = applet.createGraphics(
+        toInt('width),
+        toInt('height),
+        PConstants.JAVA2D
+      )
+
+      renderer = createGraphics
+      var graphics = createGraphics
+      val halfW = renderer.width  >> 1
+      val halfH = renderer.height >> 1
       
-      drawPGraphics(renderer) {
+      drawPGraphics(graphics) {
         g =>
           
         def rotate(angle: Int) {
-          g.translate(centerX, centerY)
+          g.translate(halfW, halfH)
           g.rotate( PApplet.radians(angle) )
         }
           
@@ -53,7 +64,7 @@ class DiagramEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
         g.fill(toInt('red), toInt('green), toInt('blue))        
         diagramType match {
           case CircleType =>
-            g.ellipse(centerX, centerY, size, size)
+            g.ellipse(halfW, halfH, size, size)
           case BoxType =>
             rotate(angle)
             g.rect(-half, -half, size, size)
@@ -67,13 +78,22 @@ class DiagramEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
             g.triangle(0, -half, -x, y, x, y)
         }
       }
+      
+      drawPGraphics(renderer) { _.image(graphics, toInt('x), toInt('y)) }
     }
     
     def draw() {
       applet.fill(255)
       applet.noStroke()
-      applet.rect(rect.x, rect.y, rect.width, rect.height)
-      applet.image(renderer, rect.x, rect.y)
+
+      applet.rectMode(PConstants.CENTER)
+      applet.imageMode(PConstants.CENTER)
+      
+      applet.rect(centerX, centerY, renderer.width, renderer.height)
+      applet.image(renderer, centerX, centerY)
+
+      applet.rectMode(PConstants.CORNER)
+      applet.imageMode(PConstants.CORNER)  
     }
   }
   
@@ -98,23 +118,26 @@ class DiagramEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     }
    
     List(
-      ('red,   "赤",     0,  255),
-      ('green, "緑",     0,  255),
-      ('blue,  "青",     0,  255),
-//      ('alpha, "透明",   0,  255),
-      ('angle, "角度",   0,  360),
-      ('size,  "大きさ", 10, 140)
+      ('width,  "width",  20,  200, 200),
+      ('height, "height", 20,  200, 200),
+      ('x,      "x",     -200, 200, 0),
+      ('y,      "y",     -200, 200, 0),
+      ('red,    "red",      0, 255, 255),
+      ('green,  "green",    0, 255, 0),
+      ('blue,   "blue",     0, 255, 0),
+      ('angle,  "angle",    0, 360, 0),
+      ('size,   "size",    10, 140, 140)
     ) foreach {
-      case (symbol, text, min, max) =>
+      case (symbol, text, min, max, default) =>
 
       val rect = layout.rect(symbol)
       new Image(
-        rect.x, rect.y - 25,
+        rect.x, rect.y - 20,
         gg.createLabel(
           text,
           rect.width,
           rect.height,
-          size = 18,
+          size = 14,
           frontColor = 0xFFFFFF
         )
       )
@@ -122,7 +145,7 @@ class DiagramEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
       val intField = new paramManager.IntField(symbol, min, max) {
         override def updateValue(): Unit = canvas.update()
         
-        value = min
+        value = default
         setBounds(rect)
       }
       
@@ -202,9 +225,8 @@ class DiagramEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     applet.background(38, 49, 56)
     buttonManager.checkMouse()
     buttonManager.draw()
-
+    
     images.draw()
-
     canvas.draw()
   }
 }
