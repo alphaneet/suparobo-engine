@@ -34,31 +34,31 @@
         </layout><layout>
         <name>red</name>
         <x>300</x>
-        <y>75</y>
+        <y>150</y>
         <width>50</width>
         <height>25</height>
         </layout><layout>
         <name>green</name>
         <x>450</x>
-        <y>75</y>
+        <y>150</y>
         <width>50</width>
         <height>25</height>
         </layout><layout>
         <name>blue</name>
         <x>300</x>
-        <y>150</y>
+        <y>200</y>
         <width>50</width>
         <height>25</height>
         </layout><layout>
         <name>angle</name>
         <x>300</x>
-        <y>225</y>
+        <y>250</y>
         <width>50</width>
         <height>25</height>
         </layout><layout>
         <name>size</name>
         <x>450</x>
-        <y>225</y>
+        <y>250</y>
         <width>50</width>
         <height>25</height>
         </layout><layout>
@@ -82,7 +82,31 @@
         </layout><layout>
         <name>alpha</name>
         <x>450</x>
-        <y>150</y>
+        <y>200</y>
+        <width>50</width>
+        <height>25</height>
+        </layout><layout>
+        <name>width</name>
+        <x>300</x>
+        <y>50</y>
+        <width>50</width>
+        <height>25</height>
+        </layout><layout>
+        <name>height</name>
+        <x>450</x>
+        <y>50</y>
+        <width>50</width>
+        <height>25</height>
+        </layout><layout>
+        <name>x</name>
+        <x>300</x>
+        <y>100</y>
+        <width>50</width>
+        <height>25</height>
+        </layout><layout>
+        <name>y</name>
+        <x>450</x>
+        <y>100</y>
         <width>50</width>
         <height>25</height>
         </layout>
