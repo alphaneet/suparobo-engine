@@ -3,6 +3,9 @@
 
 /processing2D/project/target/*
 /processing2D/target/*
+/processing2D/data/decks/deck0.xml
+/processing2D/data/decks/deck1.xml
+/processing2D/data/decks/deck2.xml
 
 /tools/project/target/*
 /tools/target/*

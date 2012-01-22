@@ -3,111 +3,183 @@
     <height>600</height>
     <layout>
         <name>deck01</name>
-        <x>675</x>
-        <y>125</y>
+        <x>670</x>
+        <y>130</y>
         <width>100</width>
         <height>100</height>
         </layout><layout>
         <name>deck02</name>
-        <x>675</x>
-        <y>225</y>
+        <x>670</x>
+        <y>230</y>
         <width>100</width>
         <height>100</height>
         </layout><layout>
         <name>deck03</name>
-        <x>675</x>
-        <y>325</y>
+        <x>670</x>
+        <y>330</y>
         <width>100</width>
         <height>100</height>
         </layout><layout>
         <name>back</name>
-        <x>675</x>
-        <y>550</y>
+        <x>670</x>
+        <y>530</y>
         <width>100</width>
-        <height>25</height>
+        <height>30</height>
         </layout><layout>
         <name>nowCost</name>
-        <x>675</x>
-        <y>25</y>
-        <width>100</width>
+        <x>660</x>
+        <y>50</y>
+        <width>50</width>
         <height>50</height>
         </layout><layout>
-        <name>deckLabel</name>
-        <x>675</x>
-        <y>100</y>
-        <width>100</width>
-        <height>25</height>
-        </layout><layout>
         <name>hitPoint</name>
-        <x>25</x>
-        <y>50</y>
-        <width>100</width>
+        <x>20</x>
+        <y>90</y>
+        <width>125</width>
         <height>25</height>
         </layout><layout>
         <name>attackPoint</name>
-        <x>25</x>
-        <y>100</y>
-        <width>100</width>
-        <height>25</height>
-        </layout><layout>
-        <name>defencePoint</name>
-        <x>25</x>
-        <y>150</y>
-        <width>100</width>
+        <x>20</x>
+        <y>210</y>
+        <width>125</width>
         <height>25</height>
         </layout><layout>
         <name>moveRangePoint</name>
-        <x>25</x>
-        <y>200</y>
-        <width>100</width>
+        <x>20</x>
+        <y>150</y>
+        <width>125</width>
         <height>25</height>
         </layout><layout>
         <name>attackRangePoint</name>
-        <x>25</x>
-        <y>250</y>
-        <width>100</width>
+        <x>20</x>
+        <y>270</y>
+        <width>125</width>
         <height>25</height>
         </layout><layout>
         <name>cost</name>
-        <x>25</x>
-        <y>300</y>
-        <width>100</width>
+        <x>20</x>
+        <y>390</y>
+        <width>125</width>
         <height>25</height>
         </layout><layout>
-        <name>champions</name>
-        <x>175</x>
-        <y>50</y>
-        <width>450</width>
-        <height>150</height>
-        </layout><layout>
         <name>minionsLabel</name>
-        <x>304</x>
-        <y>225</y>
+        <x>300</x>
+        <y>200</y>
         <width>200</width>
         <height>25</height>
         </layout><layout>
         <name>championsLabel</name>
         <x>300</x>
-        <y>25</y>
+        <y>20</y>
         <width>200</width>
         <height>25</height>
         </layout><layout>
-        <name>minions</name>
-        <x>175</x>
-        <y>250</y>
-        <width>450</width>
-        <height>300</height>
-        </layout><layout>
         <name>save</name>
-        <x>675</x>
+        <x>670</x>
         <y>450</y>
         <width>100</width>
-        <height>25</height>
+        <height>30</height>
         </layout><layout>
         <name>clear</name>
-        <x>675</x>
-        <y>500</y>
+        <x>670</x>
+        <y>490</y>
         <width>100</width>
+        <height>30</height>
+        </layout><layout>
+        <name>reimu</name>
+        <x>200</x>
+        <y>70</y>
+        <width>100</width>
+        <height>100</height>
+        </layout><layout>
+        <name>marisa</name>
+        <x>350</x>
+        <y>70</y>
+        <width>100</width>
+        <height>100</height>
+        </layout><layout>
+        <name>youmu</name>
+        <x>500</x>
+        <y>70</y>
+        <width>100</width>
+        <height>100</height>
+        </layout><layout>
+        <name>tank01</name>
+        <x>200</x>
+        <y>450</y>
+        <width>100</width>
+        <height>100</height>
+        </layout><layout>
+        <name>tank02</name>
+        <x>200</x>
+        <y>350</y>
+        <width>100</width>
+        <height>100</height>
+        </layout><layout>
+        <name>tank03</name>
+        <x>200</x>
+        <y>250</y>
+        <width>100</width>
+        <height>100</height>
+        </layout><layout>
+        <name>carry01</name>
+        <x>350</x>
+        <y>450</y>
+        <width>100</width>
+        <height>100</height>
+        </layout><layout>
+        <name>carry02</name>
+        <x>350</x>
+        <y>350</y>
+        <width>100</width>
+        <height>100</height>
+        </layout><layout>
+        <name>carry03</name>
+        <x>350</x>
+        <y>250</y>
+        <width>100</width>
+        <height>100</height>
+        </layout><layout>
+        <name>fighter01</name>
+        <x>500</x>
+        <y>450</y>
+        <width>100</width>
+        <height>100</height>
+        </layout><layout>
+        <name>fighter02</name>
+        <x>500</x>
+        <y>350</y>
+        <width>100</width>
+        <height>100</height>
+        </layout><layout>
+        <name>fighter03</name>
+        <x>500</x>
+        <y>250</y>
+        <width>100</width>
+        <height>100</height>
+        </layout><layout>
+        <name>guardPoint</name>
+        <x>20</x>
+        <y>330</y>
+        <width>125</width>
+        <height>25</height>
+        </layout><layout>
+        <name>maxCost</name>
+        <x>730</x>
+        <y>50</y>
+        <width>50</width>
+        <height>50</height>
+        </layout><layout>
+        <name>name</name>
+        <x>20</x>
+        <y>30</y>
+        <width>125</width>
+        <height>25</height>
+        </layout><layout>
+        <name>costLabel</name>
+        <x>660</x>
+        <y>30</y>
+        <width>120</width>
         <height>25</height>
         </layout>
     </layouts>

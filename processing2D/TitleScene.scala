@@ -1,7 +1,7 @@
 package com.github.alphaneet.suparobo
 
 case class TitleScene(applet: SPApplet) extends Scene(applet) {
-  val layout = new LayoutXML(LayoutsPath + "title.xml")
+  val layout = new LayoutXML(LAYOUTS_PATH + "title.xml")
   val buttonManager = new ButtonManager(applet)
   val gg = new GraphicsGenerator(applet)
   object title {
@@ -10,8 +10,8 @@ case class TitleScene(applet: SPApplet) extends Scene(applet) {
       "スーパー東方大戦",
       rect.width,
       rect.height,
-      50,
-      0
+      size = 60,
+      frontColor = C5   
     )
     
     def draw() {
@@ -23,9 +23,9 @@ case class TitleScene(applet: SPApplet) extends Scene(applet) {
   {
     def createButtonImages(text: String, width: Int, height: Int): List[PImage] = {
       def create(color: Int): PImage =
-        gg.createLabel(text, width, height, 18, color, 0x000000)
+        gg.createLabel(text, width, height, 18, color, C5)
       
-      List(0xFFFFFF, 0xAAAAAA, 0x333333).map(create)
+      List(C2, C1, C3).map(create)
     }
     
     List(
@@ -53,7 +53,7 @@ case class TitleScene(applet: SPApplet) extends Scene(applet) {
   def exit(): Unit = applet.exit()
     
   override def draw() {
-    applet.background(255)
+    applet.background(C2)
 
     buttonManager.checkMouse()
     buttonManager.draw()

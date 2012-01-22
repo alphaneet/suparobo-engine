@@ -6,8 +6,13 @@ package object suparobo {
   
   trait CharactersFixture {
     val REIMU = new Champion {      
-      param.update(
+      val profile = CharacterProfile(
+        id = 1,
         name = "霊夢",
+        symbol = 'reimu
+      )
+
+      val param = CharacterParameter(
         hitPoint = 100,
         moveRangePoint = 3,
         attackPoint = 100,
@@ -18,8 +23,13 @@ package object suparobo {
     }
     
     val MARISA = new Champion {
-      param.update(
+      val profile = CharacterProfile(
+        id = 2,
         name = "魔理沙",
+        symbol = 'marisa
+      )
+
+      val param = CharacterParameter(
         hitPoint = 100,
         moveRangePoint = 3,
         attackPoint = 100,
@@ -30,8 +40,13 @@ package object suparobo {
     }
     
     val TANK = new Minion {
-      param.update(
+      val profile = CharacterProfile(
+        id = 1,
         name = "タンク",
+        symbol = 'tank
+      )
+
+      val param = CharacterParameter(
         hitPoint = 100,
         moveRangePoint = 3,
         attackPoint = 100,
@@ -42,8 +57,13 @@ package object suparobo {
     }
 
     val CARRY = new Minion {
-      param.update(
+      val profile = CharacterProfile(
+        id = 2,
         name = "キャリー",
+        symbol = 'carry
+      )
+
+      val param = CharacterParameter(
         hitPoint = 100,
         moveRangePoint = 3,
         attackPoint = 100,
@@ -54,15 +74,20 @@ package object suparobo {
     }
 
     val FIGHTER = new Minion {
-      param.update(
+      val profile = CharacterProfile(
+        id = 3,
         name = "ファイター",
+        symbol = 'fighter
+      )
+
+      val param = CharacterParameter(
         hitPoint = 100,
         moveRangePoint = 3,
         attackPoint = 100,
         attackRangePoint = 5,
         guardPoint = 20,
         cost = 1
-      )
+      )      
     }
   }
 }

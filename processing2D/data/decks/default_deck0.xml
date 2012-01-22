@@ -1,0 +1,18 @@
+<deck>
+    <champion>
+    <id>1</id>
+    </champion>
+    
+    <minions>
+    <minion>
+        <id>1</id>
+        </minion><minion>
+        <id>5</id>
+        </minion><minion>
+        <id>9</id>
+        </minion><minion>
+        <id>7</id>
+        </minion>
+    </minions>
+    
+    </deck>
