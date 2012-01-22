@@ -151,18 +151,18 @@ class DeckSuite extends FunSuite with ShouldMatchers {
     }
   }
   
-  // ja: #equalsChampion は引数の値と #champion が同じものなら true を返す
-  test("#equalsChampion should return true, if together.") {
+  // ja: #existsChampion は引数の値と #champion が同じものなら true を返す
+  test("#existsChampion should return true, if together.") {
     new CharactersFixture {
       val deck = new Deck(10)
                   
-      deck.equalsChampion(REIMU)  should be (false)    
-      deck.equalsChampion(MARISA) should be (false)
+      deck.existsChampion(REIMU)  should be (false)    
+      deck.existsChampion(MARISA) should be (false)
 
       deck.champion = Option(MARISA)
       
-      deck.equalsChampion(REIMU)  should be (false)
-      deck.equalsChampion(MARISA) should be (true)
+      deck.existsChampion(REIMU)  should be (false)
+      deck.existsChampion(MARISA) should be (true)
     }
   }
 

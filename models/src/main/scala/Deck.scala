@@ -199,8 +199,8 @@ class Deck(val maxCost: Int) extends NotNull with MyXMLLoader {
     minions.clear()
   }
   
-  def equalsChampion(other: Champion): Boolean = {
-    champion map(_ == other) getOrElse(false)
+  def existsChampion(other: Champion): Boolean = {
+    champion exists(_ == other)
   }
 
   def existsMinion(other: Minion): Boolean = {

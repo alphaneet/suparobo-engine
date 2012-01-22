@@ -262,7 +262,7 @@ case class DeckMakeScene(applet: SPApplet) extends Scene(applet) with MyUtil {
       champion =>
       registerCharacter(champion) {
         nowDeck.champion =
-          if (nowDeck.equalsChampion(champion)) {
+          if (nowDeck.existsChampion(champion)) {
             None
           } else {
             Option(champion)
