@@ -6,6 +6,7 @@ class NoSuchChampionException(msg: String = "") extends Exception(msg)
 // コストオーバーの場合
 class OverCostException(msg: String = "") extends Exception(msg)
 
+// TK: XML2Value に置き変える。
 sealed trait MyXMLLoader {
   import scala.xml.Node
   

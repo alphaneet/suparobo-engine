@@ -114,8 +114,10 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     Key('row_plus,     'd', ": キャンバスの高さを増やす")  { editor.row += 1 }
     Key('row_minus,    'e', ": キャンバスの高さを減らす")  { editor.row -= 1 }
 
-    Key('save, 'o', ": 保存画面を開く")     { saveBinary() }
-    Key('load, 'l', ": 読み込み画面を開く") { loadBinary() }
+//    Key('save, 'o', ": 保存画面を開く")     { saveBinary() }
+    Key('save, 'o', ": 保存画面を開く")     { saveXML() }
+//    Key('load, 'l', ": 読み込み画面を開く") { loadBinary() }
+    Key('load, 'l', ": 読み込み画面を開く") { loadXML() }
     
     Key('help, 'h', ": ヘルプの開閉") {
       if (help.isOpen) help.close() else help.open()
@@ -231,7 +233,7 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     }
   }
 
-  val buffer = Array.fill(MAX_COLUMN * MAX_ROW)(statuses.head)
+  val buffer: Array[Status] = Array.fill(MAX_COLUMN * MAX_ROW)(statuses.head)
   
   object focus {
     var pos = new PVector(30, 30)
@@ -259,8 +261,10 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
 
     val createMenuButton = createButtonByBasicColor(150, 30, 12)
 
-    createMenuButton(30, 210, "Save") { saveBinary() }
-    createMenuButton(30, 255, "Load") { loadBinary() }
+//    createMenuButton(30, 210, "Save") { saveBinary() }
+    createMenuButton(30, 210, "Save") { saveXML() }
+//    createMenuButton(30, 255, "Load") { loadBinary() }
+    createMenuButton(30, 255, "Load") { loadXML() }
     createMenuButton(30, 300, "Help") { help.open()  }
     
     val size = 20
@@ -319,7 +323,7 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     
     applet.saveBytes(filename, size ++ data)
   }
-
+  
   def loadBinary(filename: String = applet.selectInput()) {    
     if (filename == null) return
 
@@ -343,6 +347,52 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
     
     updateInfo()
   }
+
+  def saveXML(filename: String = applet.selectOutput()) {
+    if (filename == null) return
+    val xml = <board>
+    <column>{ column }</column>
+    <row>{ row }</row>
+    {
+      buffer.iterator.zipWithIndex withFilter {
+        case (_, index) =>
+        bufferContains(index)
+      } map {
+        case (status, _) =>
+        <status>
+        <id>{ status.id }</id>
+        </status>
+      }
+    }
+    </board>
+
+    scala.xml.XML.save(filename, xml, "utf-8")
+  }
+
+  def loadXML(filename: String = applet.selectInput()) {    
+    if (filename == null) return
+    val xml = scala.xml.XML.loadFile(filename)
+
+    {
+      val to = new XML2Value(xml)
+      column = to.int("column")
+      row    = to.int("row")
+    }    
+    
+    (xml \ "status").iterator.zipWithIndex foreach {
+      case (node, dataIndex) =>
+      val to = new XML2Value(node)
+      val x = dataIndex % editor.column
+      val y = dataIndex / editor.column
+      val bufferIndex = (x + y * MAX_COLUMN)
+        
+      if (bufferContains(bufferIndex)) {
+        buffer(bufferIndex) = statuses find {
+          _.id == to.int("id")
+        } getOrElse(statuses.head)
+      }
+    }
+  }  
 
   override def draw() {
     import applet.{ rect }
