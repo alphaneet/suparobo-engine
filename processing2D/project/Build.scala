@@ -11,5 +11,8 @@ object Processing2DBuild extends Build {
   ) dependsOn(models, scalaProcessing)
   
   lazy val models = file("../models")
-  lazy val scalaProcessing = uri("git://github.com/alphaneet/scala-processing.git")
+  
+//  lazy val scalaProcessing = uri("git://github.com/alphaneet/scala-processing.git")
+
+  lazy val scalaProcessing = file("../scala-processing")
 }

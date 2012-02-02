@@ -11,4 +11,7 @@
 /tools/target/*
 /tools/data/CharactersEditorConfig.xml
 
+/scala-processing/project/target/*
+/scala-processing/target/*
+
 .DS_Store

@@ -9,6 +9,10 @@ object MyBuild extends Build {
     base = file("."),
     settings = Defaults.defaultSettings ++ Seq( shellPrompt := { _ => branchName } )
   ) dependsOn(models, scalaProcessing)
+  
   lazy val models = file("../models")
-  lazy val scalaProcessing = uri("git://github.com/alphaneet/scala-processing.git")
+  
+//  lazy val scalaProcessing = uri("git://github.com/alphaneet/scala-processing.git")
+
+  lazy val scalaProcessing = file("../scala-processing")  
 }
