@@ -1,13 +1,15 @@
 package com.github.alphaneet.suparobo
 
 object Main extends SPApplet {
+  // TK: scala-processing に移す
+  implicit val applet = this
+  
   val screenSize = new Dimension(800, 600)
   override def setup() {
     size(processing.core.PConstants.P2D)
     frameRate(24)
     title = "スーパー東方大戦"
-    DeckMakeScene(this)
-//    TitleScene(this)
+    TitleScene()
   }
 }
 
@@ -95,4 +97,33 @@ abstract class Dialog(val applet: SPApplet) {
 
   def checkMouse(): Unit = mode foreach { _.checkMouse() }
   def draw(): Unit = mode foreach { _.draw() }
+}
+
+class MyDialog(
+  implicit applet: SPApplet, val gg: GraphicsGenerator
+) extends Dialog(applet) {
+  val width        = 300
+  val height       = 200
+  val okText       = "はい"
+  val cancelText   = "いいえ"
+  val buttonY      = centerY + 30
+  val bodyY        = centerY - 80
+  val buttonWidth  = 100
+  val buttonHeight = 35
+
+  def background() {
+    applet.strokeWeight(2)
+    applet.stroke(C5R, C5G, C5B)
+    applet.fill(C2R, C2G, C2B)
+    applet.rect(centerX(width), centerY(height), width, height)
+  }
+
+  def createBody(text: String): PImage = {
+    gg.createLabel(text, width, 100, 18, C5)
+  }
+
+  def createButtonImages(text: String): List[PImage] =
+    com.github.alphaneet.suparobo.createButtonImages(
+      text, buttonWidth, buttonHeight
+    )
 }

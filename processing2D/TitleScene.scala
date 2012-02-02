@@ -1,6 +1,6 @@
 package com.github.alphaneet.suparobo
 
-case class TitleScene(applet: SPApplet) extends Scene(applet) {
+case class TitleScene(implicit applet: SPApplet) extends Scene(applet) {
   val layout = new LayoutXML(LAYOUTS_PATH + "title.xml")
   val buttonManager = new ButtonManager(applet)
   val gg = new GraphicsGenerator(applet)
@@ -46,9 +46,9 @@ case class TitleScene(applet: SPApplet) extends Scene(applet) {
     }
   }
 
-  def start() { println("未実装") } 
+  def start() { BoardSelectScene() }
   def network() { println("未実装") }
-  def deck() { DeckMakeScene(applet) }
+  def deck() { DeckMakeScene() }
   def replay() { println("未実装") }
   def exit(): Unit = applet.exit()
     

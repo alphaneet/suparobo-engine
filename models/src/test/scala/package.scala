@@ -3,6 +3,13 @@ package com.github.alphaneet
 package object suparobo {
   type FunSuite = org.scalatest.FunSuite
   type ShouldMatchers = org.scalatest.matchers.ShouldMatchers
+
+  trait BoardFixture {
+    val FLAT   = Board.FLAT
+    val WOOD   = Board.WOOD
+    val HILL   = Board.HILL
+    val MOUNT  = Board.MOUNT    
+  }  
   
   trait CharactersFixture {
     val REIMU = new Champion {      

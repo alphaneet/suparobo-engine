@@ -351,8 +351,8 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
   def saveXML(filename: String = applet.selectOutput()) {
     if (filename == null) return
     val xml = <board>
-    <column>{ column }</column>
-    <row>{ row }</row>
+    <width>{ column }</width>
+    <height>{ row }</height>
     {
       buffer.iterator.zipWithIndex withFilter {
         case (_, index) =>
@@ -375,8 +375,8 @@ class MapEditorScene(applet: EditorPApplet) extends EditorScene(applet) {
 
     {
       val to = new XML2Value(xml)
-      column = to.int("column")
-      row    = to.int("row")
+      column = to.int("width")
+      row    = to.int("height")
     }    
     
     (xml \ "status").iterator.zipWithIndex foreach {

@@ -677,7 +677,7 @@ class GraphicsGenerator(applet: processing.core.PApplet) extends NotNull {
   }  
   
   def createAndDrawPImage(width: Int, height: Int)(draw: PGraphics => Unit): PImage = {
-    if (width < 0 || height < 0) return applet.createImage(0, 0, ARGB)
+    if (width <= 0 || height <= 0) return applet.createImage(0, 0, ARGB)
     
     val g: PGraphics = applet.createGraphics(width, height, JAVA2D)
     
