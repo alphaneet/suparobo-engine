@@ -34,12 +34,13 @@ case class BoardSelectScene(
     )
 
     val viewerRect= layout.rect('viewer)
-    
-    // TK: とりあえず3固定      
-    (1 to 3) foreach {
-      index =>
 
-      val board = Board.loadXML(BOARDS_PATH + "stage" + index + ".xml")
+    (new java.io.File(BOARDS_PATH)).list withFilter {
+      _.endsWith(".xml")
+    } foreach {
+      filename =>
+
+      val board = Board.loadXML(BOARDS_PATH + filename)    
       val sprite = createBoardSprite(board, viewerRect)
       val buttonImages = List(
         (C2, C5),

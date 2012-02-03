@@ -7,7 +7,7 @@ case class DeckSelectScene(
   i18n: I18N
 ) extends DeckScene(LAYOUTS_PATH + "DeckSelectScene.xml") {
   val title = createLabel(t("DeckSelectScene.title"), 'title, 30)
-
+  
   registerButtons(
     menuBtnMgr,
     List(
@@ -17,6 +17,12 @@ case class DeckSelectScene(
     )
   )
 
+  val boardNameLabel = createLabel(
+    game.board.map(_.name).getOrElse(""),
+    'boardName,
+    size = 20
+  )
+  
   val boardViewer: Option[Sprite] = game.board.map {
     createBoardSprite(_, layout.rect('viewer))
   }
@@ -33,9 +39,10 @@ case class DeckSelectScene(
   }
 
   override def draw() {
-    applet.background(C2)
+    applet.background(C2)    
         
     title.draw()
+    boardNameLabel.draw()
     boardViewer foreach { _.draw() }
     super.draw()
   }  

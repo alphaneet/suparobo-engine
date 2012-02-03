@@ -159,9 +159,9 @@
         <height>50</height>
         </layout><layout>
         <name>name</name>
-        <x>40</x>
+        <x>20</x>
         <y>180</y>
-        <width>100</width>
+        <width>140</width>
         <height>20</height>
         </layout><layout>
         <name>costLabel</name>
@@ -184,8 +184,8 @@
         </layout><layout>
         <name>boardName</name>
         <x>600</x>
-        <y>180</y>
+        <y>160</y>
         <width>180</width>
-        <height>20</height>
+        <height>40</height>
         </layout>
     </layouts>
