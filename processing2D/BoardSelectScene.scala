@@ -2,13 +2,16 @@ package com.github.alphaneet.suparobo
 
 case class BoardSelectScene(
   game: Game = Game()
-)(implicit applet: SPApplet) extends Scene(applet) {  
-  implicit val layout = new LayoutXML(LAYOUTS_PATH + "boards.xml")
-  implicit val gg = new GraphicsGenerator(applet)
+)(implicit
+  applet: SPApplet,
+  i18n: I18N
+) extends Scene(applet) {  
+  implicit val layout = new LayoutXML(LAYOUTS_PATH + "BoardSelectScene.xml")
+  implicit val gg     = new GraphicsGenerator(applet)
 
   val dialog  = new MyDialog  
   val buttons = new ButtonManager(applet)
-  val boards  = new ListManager(applet) {
+  val boards  = new ListManager(applet) {    
     val rect = layout.rect('boards)
     x = rect.x
     y = rect.y
@@ -18,15 +21,15 @@ case class BoardSelectScene(
   val boardPacks = scala.collection.mutable.Map[boards.Button, BoardPack]() 
   var selectBoard: Option[BoardPack] = None
   
-  val title = createLabel("ステージを選択してください", 'title, 30)
+  val title = createLabel(t("BoardSelectScene.title"), 'title, 30)
 
   // initialize
   {
     registerButtons(
       buttons,      
       List(
-        ('select, "デッキ選択へ", select _),
-        ('back,   "戻る", back _)        
+        ('select, t("BoardSelectScene.select"), select _),
+        ('back,   t("back"), back _)        
       )
     )
 
@@ -65,7 +68,7 @@ case class BoardSelectScene(
 
   def select() {
     if (selectBoard.isEmpty) {
-      dialog.message("ステージを選択してください")      
+      dialog.message(t("BoardSelectScene.PleaseSelect"))
       return
     }
 
@@ -73,7 +76,7 @@ case class BoardSelectScene(
   }
   
   def back() {
-    dialog.confirm("タイトル画面に戻りますか？") {                         
+    dialog.confirm(t("TitleScene.back")) {
       TitleScene()
     }    
   }

@@ -2,7 +2,10 @@ package com.github.alphaneet.suparobo
 
 abstract class DeckScene(
   layoutFilename: String
-)(implicit applet: SPApplet) extends Scene(applet) with MyUtil {
+)(implicit
+  applet: SPApplet,
+  i18n: I18N
+) extends Scene(applet) with MyUtil {
   scene =>    
   
   implicit val layout = new LayoutXML(layoutFilename)
@@ -37,25 +40,14 @@ abstract class DeckScene(
   import scala.collection.mutable.LinkedHashMap
   val characterButtons = LinkedHashMap[Character, charaBtnMgr.Button]()
   val deckButtons      = LinkedHashMap[Deck,      deckBtnMgr.Button]()
-
-  
-  // TK: 仮に置く、いつか rails like な i18n にする t('hitPoint) みたいな
-  val CHARACTER_TEXTS = Map(
-    'name -> "",
-    'hitPoint -> "HP",
-    'moveRangePoint -> "移動力",
-    'attackPoint -> "攻撃力",
-    'attackRangePoint -> "攻撃範囲",
-    'guardPoint -> "防御力",
-    'cost -> "コスト"     
-  )
-  
+    
   object characterLabels {
     private var nowCharacter = Character.empty()
 
-    case class Value(symbol: Symbol) {      
+    case class Value(symbol: Symbol) {
+      val text = if (symbol == 'name) "" else t("parameter." + symbol.name)
       val title = createLabel(
-        CHARACTER_TEXTS(symbol),
+        text,
         symbol,
         size  = 18,
         diff  = new Rectangle(0, -25, 0, 0)
@@ -119,7 +111,7 @@ abstract class DeckScene(
       List(
         (nowDeck.nowCost, 'nowCost, new Rectangle()),
         ("／",     'nowCost,   new Rectangle(30, 0, 0, 0)),
-        ("コスト", 'costLabel, new Rectangle()),
+        (t("cost"), 'costLabel, new Rectangle()),
         (MAX_COST, 'maxCost,   new Rectangle())
       ) map {
         case (text, symbol, diff) =>
@@ -152,7 +144,7 @@ abstract class DeckScene(
     List.range(0, MAX_DECK) foreach {      
       index =>
       val id = index + 1
-      val text = "デッキ" + id
+      val text = t("deck") + id
       val symbol = Symbol("deck0" + id)
       layout(symbol) {
         rect =>
@@ -210,19 +202,19 @@ abstract class DeckScene(
     }
   }
 
-  def nowDeckName: String = "デッキ" + (decks.indexOf(nowDeck) + 1)
+  def nowDeckName: String = t("deck") + (decks.indexOf(nowDeck) + 1)
   
   def save() {    
-    dialog.confirm(nowDeckName + "を保存しますか？") {
+    dialog.confirm(nowDeckName + " " + t("confirm.save")) {
       try {
         val filename = DECKS_PATH + "deck" + decks.indexOf(nowDeck) + ".xml"
         nowDeck.entry().saveXML(filename)        
-        dialog.message("保存しました")
+        dialog.message(t("execute.save"))
       } catch {
         case _: NoSuchChampionException =>
-          dialog.message("チャンピオンを選択してください")
+          dialog.message(t("NoSuchChampionException"))
         case _: OverCostException =>
-          dialog.message("コストオーバーです")
+          dialog.message(t("OverCostException"))
         case ex =>
           ex.printStackTrace(Console.err)
           dialog.message(ex.getClass.getSimpleName)
@@ -231,7 +223,7 @@ abstract class DeckScene(
   }
   
   def clear() {
-    dialog.confirm(nowDeckName + "を初期状態に戻しますか？") {
+    dialog.confirm(nowDeckName + " " +  t("confirm.clear")) {
       nowDeck.clear()
       costLabels.update()
     }

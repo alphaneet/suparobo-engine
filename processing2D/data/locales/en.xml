@@ -1,0 +1,37 @@
+<en>
+  <ja>日本語</ja>
+  <en>English</en>
+  
+  <title>Super Toho War</title>
+
+  <parameter>
+    <name>name</name>
+    <hitPoint>Life</hitPoint>    
+    <moveRangePoint>Move</moveRangePoint>
+    <attackPoint>Attack</attackPoint>
+    <attackRangePoint>Range</attackRangePoint>
+    <guardPoint>Guard</guardPoint>
+    <cost>Cost</cost>
+  </parameter>
+  
+  
+  <TitleScene>
+    <start>Stage Select</start>
+    <network>Network Versus</network>
+    <deck>Deck Make</deck>
+    <replay>Replay View</replay>
+    <exit>Exit</exit>
+  </TitleScene>
+
+  <DeckSelectScene>
+    <title>Please Select Deck</title>
+    <entryMessage>ok?</entryMessage>
+  </DeckSelectScene>
+  
+  <BoardSelectScene>
+    <title>Please Select Board</title>
+    <select>deck select</select>
+    <PleaseSelect>Plese Select Board</PleaseSelect>
+  </BoardSelectScene>    
+  
+</en>

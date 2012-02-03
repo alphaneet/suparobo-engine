@@ -1,15 +1,13 @@
 package com.github.alphaneet.suparobo
 
-object Main extends SPApplet {
-  // TK: scala-processing に移す
-  implicit val applet = this
-  
+object Main extends SPApplet {  
   val screenSize = new Dimension(800, 600)
   override def setup() {
     size(processing.core.PConstants.P2D)
     frameRate(24)
-    title = "スーパー東方大戦"
-    TitleScene()
+    val i18n = createI18N("ja")
+    title = i18n.t("title")
+    TitleScene()(this, i18n)
   }
 }
 
@@ -100,12 +98,12 @@ abstract class Dialog(val applet: SPApplet) {
 }
 
 class MyDialog(
-  implicit applet: SPApplet, val gg: GraphicsGenerator
+  implicit applet: SPApplet, val gg: GraphicsGenerator, i18n: I18N
 ) extends Dialog(applet) {
   val width        = 300
   val height       = 200
-  val okText       = "はい"
-  val cancelText   = "いいえ"
+  val okText       = i18n.t("yes")
+  val cancelText   = i18n.t("no")
   val buttonY      = centerY + 30
   val bodyY        = centerY - 80
   val buttonWidth  = 100

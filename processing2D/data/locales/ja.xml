@@ -1,0 +1,64 @@
+<ja>
+  <ja>日本語</ja>
+  <en>English</en>
+  
+  <title>スーパー東方大戦</title>
+  
+  <yes>はい</yes>
+  <no>いいえ</no>
+
+  <save>保存</save>
+  <clear>クリア</clear>
+  <back>戻る</back>
+  <entry>決定</entry>
+
+  <champion>チャンピオン</champion>
+  <minion>ミニオン</minion>
+
+  <cost>コスト</cost>
+  <deck>デッキ</deck>    
+
+  <parameter>
+    <name>名前</name>
+    <hitPoint>HP</hitPoint>    
+    <moveRangePoint>移動力</moveRangePoint>
+    <attackPoint>攻撃力</attackPoint>
+    <attackRangePoint>攻撃範囲</attackRangePoint>
+    <guardPoint>防御力</guardPoint>
+    <cost>コスト</cost>
+  </parameter>
+
+  <confirm>
+    <save>を保存しますか？</save>
+    <clear>を初期状態に戻しますか？</clear>
+  </confirm>
+
+  <execute>
+    <save>保存しました</save>
+  </execute>
+
+  <NoSuchChampionException>チャンピオンを選択してください</NoSuchChampionException>
+  <OverCostException>コストオーバーです</OverCostException>
+  
+  <TitleScene>
+    <start>ステージ選択</start>
+    <network>ネット対戦</network>
+    <deck>デッキ作成</deck>
+    <replay>リプレイ鑑賞</replay>
+    <exit>終了</exit>
+
+    <back>タイトル画面に戻りますか？</back>
+  </TitleScene>
+
+  <DeckSelectScene>
+    <title>デッキを選択してください</title>
+    <entryMessage>でよいですか？</entryMessage>
+  </DeckSelectScene>
+
+  <BoardSelectScene>
+    <title>ステージを選択してください</title>
+    <select>デッキ選択へ</select>
+    <PleaseSelect>ステージを選択してください</PleaseSelect>
+    <back>ステージ選択に戻りますか？</back>
+  </BoardSelectScene>  
+</ja>

@@ -2,15 +2,18 @@ package com.github.alphaneet.suparobo
 
 case class DeckSelectScene(
   game: Game = Game()
-)(implicit applet: SPApplet) extends DeckScene(LAYOUTS_PATH + "DeckSelectScene.xml") {
-  val title = createLabel("デッキを選択してください", 'title, 30)
+)(implicit
+  applet: SPApplet,
+  i18n: I18N
+) extends DeckScene(LAYOUTS_PATH + "DeckSelectScene.xml") {
+  val title = createLabel(t("DeckSelectScene.title"), 'title, 30)
 
   registerButtons(
     menuBtnMgr,
     List(
-      ('entry, "決定", entry _),
-      ('save,  "保存", save _),      
-      ('back,  "戻る", back _)
+      ('entry, t("entry"), entry _),
+      ('save,  t("save"),  save _),      
+      ('back,  t("back"),  back _)
     )
   )
 
@@ -19,13 +22,13 @@ case class DeckSelectScene(
   }
     
   def back() {
-    dialog.confirm("ステージ選択に戻りますか？") {
+    dialog.confirm(t("BoardSelectScene.back")) {
       BoardSelectScene(game)
     }
   }
 
   def entry() {
-    dialog.confirm(nowDeckName + "でよいですか？") {
+    dialog.confirm(nowDeckName + " " + t("DeckSelectScene.entryMessage")) {
     }
   }
 

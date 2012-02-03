@@ -8,6 +8,7 @@ package object suparobo extends processing.core.PConstants {
   val CHARACTERS_PATH = DATA_PATH + "characters/"  
   val DECKS_PATH      = DATA_PATH + "decks/"
   val BOARDS_PATH     = DATA_PATH + "boards/"
+  val LOCALES_PATH    = DATA_PATH + "locales/"
   
   val MAX_DECK = 3
   val MAX_COST = 13
@@ -59,6 +60,12 @@ package object suparobo extends processing.core.PConstants {
   type GraphicsGenerator = scala_processing.GraphicsGenerator  
   type LayoutXML         = scala_processing.LayoutXML
   type MyUtil            = scala_processing.MyUtil
+  type I18N              = scala_processing.I18N
+
+  def createI18N(locale: String): I18N =
+    new I18N(locale, LOCALES_PATH + locale + ".xml")
+  
+  def t(name: String)(implicit i18n: I18N): String = i18n.t(name)
 
   object Sprite {
     def empty()(implicit applet: SPApplet) = Sprite(
@@ -144,7 +151,8 @@ package object suparobo extends processing.core.PConstants {
 
   def registerButtons(
     buttonManager: ButtonManager,
-    params: List[Triple[Symbol, String, () => Unit]]
+    params: List[Triple[Symbol, String, () => Unit]],
+    size: Int = 18
   )(
     implicit layout: LayoutXML, gg: GraphicsGenerator
   ) {
@@ -153,7 +161,7 @@ package object suparobo extends processing.core.PConstants {
       layout(symbol) {
         rect =>
           
-        val images = createButtonImages(text, rect.width, rect.height)
+        val images = createButtonImages(text, rect.width, rect.height, size)
         buttonManager.register(images, rect.x, rect.y).action {
           action()
         }

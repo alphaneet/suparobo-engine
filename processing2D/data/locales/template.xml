@@ -1,0 +1,64 @@
+<template>
+  <ja>日本語</ja>
+  <en>English</en>
+  
+  <title></title>
+  
+  <yes></yes>
+  <no></no>
+
+  <save></save>
+  <clear></clear>
+  <back></back>
+  <entry></entry>
+
+  <champion></champion>
+  <minion></minion>
+
+  <cost></cost>
+  <deck></deck>    
+
+  <parameter>
+    <name></name>
+    <hitPoint></hitPoint>    
+    <moveRangePoint></moveRangePoint>
+    <attackPoint></attackPoint>
+    <attackRangePoint></attackRangePoint>
+    <guardPoint></guardPoint>
+    <cost></cost>
+  </parameter>
+
+  <confirm>
+    <save></save>
+    <clear></clear>
+  </confirm>
+
+  <execute>
+    <save></save>
+  </execute>
+
+  <NoSuchChampionException></NoSuchChampionException>
+  <OverCostException></OverCostException>
+  
+  <TitleScene>
+    <start></start>
+    <network></network>
+    <deck></deck>
+    <replay></replay>
+    <exit></exit>
+
+    <back></back>
+  </TitleScene>
+
+  <DeckSelectScene>
+    <title></title>
+    <entryMessage></entryMessage>    
+  </DeckSelectScene>
+
+  <BoardSelectScene>
+    <title></title>
+    <select></select>
+    <PleaseSelect></PleaseSelect>
+    <back></back>
+  </BoardSelectScene>
+</template>
