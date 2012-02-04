@@ -1,3 +1,5 @@
 package com.github.alphaneet.suparobo
 
-class Player
+case class Player(deck: Deck) extends NotNull {
+  
+}

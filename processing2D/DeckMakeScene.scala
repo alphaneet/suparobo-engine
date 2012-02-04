@@ -14,12 +14,20 @@ case class DeckMakeScene(implicit applet: SPApplet, i18n: I18N)
   registerButtons(
     menuBtnMgr,
     List(
-      ('save,  t("save"),  save _),
+      ('save,  t("save"),  confirmAndSave _),
       ('clear, t("clear"), clear _),
       ('back,  t("back"),  back _)
     )
   )
-
+  
+  def confirmAndSave() {    
+    dialog.confirm(nowDeckName + " " + t("confirm.save")) {
+      save {
+        dialog.message(t("execute.save"))        
+      }
+    }
+  }
+  
   def back() {
     dialog.confirm(t("TitleScene.back")) {                         
       TitleScene()

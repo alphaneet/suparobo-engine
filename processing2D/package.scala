@@ -12,7 +12,19 @@ package object suparobo extends processing.core.PConstants {
   
   val MAX_DECK = 3
   val MAX_COST = 13
+  
   def createDeck() = new Deck(MAX_COST)
+  
+  val champions: List[Champion] = Champion.loadChampions(
+    CHARACTERS_PATH + "championProfiles.xml",
+    CHARACTERS_PATH + "championParameters.xml"
+  )
+
+  val minions: List[Minion] = Minion.loadMinions(
+    CHARACTERS_PATH + "minionProfiles.xml",
+    CHARACTERS_PATH + "minionParameters.xml"
+  )
+  
 
   // thanks for http://kuler.adobe.com/#themeID/1692819
   
@@ -51,6 +63,7 @@ package object suparobo extends processing.core.PConstants {
   type Rectangle = java.awt.Rectangle
 
   type PImage     = processing.core.PImage
+  type PGraphics  = processing.core.PGraphics
   
   import com.github.alphaneet._
   type SPApplet          = scala_processing.SPApplet
@@ -66,35 +79,27 @@ package object suparobo extends processing.core.PConstants {
     new I18N(locale, LOCALES_PATH + locale + ".xml")
   
   def t(name: String)(implicit i18n: I18N): String = i18n.t(name)
-
-  object Sprite {
-    def empty()(implicit applet: SPApplet) = Sprite(
-      applet.createImage(0, 0, processing.core.PConstants.ARGB),
-      new Rectangle(0, 0, 0, 0)
-    )
-  }
   
   // TK: scala-processing にいつか移行するかも？
   case class Sprite(
-    img: PImage,
-    rect: Rectangle
+    image: PImage,
+    var x: Int,
+    var y: Int,
+    var width:  Int,
+    var height: Int
   ) extends NotNull {
+    def this(image: PImage, rect: Rectangle) = this(
+      image, rect.x, rect.y, rect.width, rect.height
+    )
+    
     def this(
-      img: PImage,
-      x: Int,
-      y: Int,
-      width: Int,
-      height: Int
-    ) = this(img, new Rectangle(x, y, width, height))
-             
-    def this(
-      img: PImage,
+      image: PImage,
       x: Int,
       y: Int
-    ) = this(img, new Rectangle(x, y, img.width, img.height))
+    ) = this(image, x, y, image.width, image.height)
     
     def draw()(implicit applet: SPApplet) {      
-      applet.image(img, rect.x, rect.y, rect.width, rect.height)
+      applet.image(image, x, y, width, height)
     }
   }
 
@@ -125,7 +130,7 @@ package object suparobo extends processing.core.PConstants {
     width: Int,
     height: Int,
     size: Int = 18
-  )( implicit gg: GraphicsGenerator): List[PImage] = {
+  )(implicit gg: GraphicsGenerator): List[PImage] = {
     List(C2, C1, C3).map {
       gg.createLabel(text, width, height, size, _, C5)
     }
@@ -133,20 +138,23 @@ package object suparobo extends processing.core.PConstants {
 
   def createBoardSprite(
     board: Board,
-    rect: Rectangle
+    rect: Rectangle,
+    draw: (PGraphics, Rectangle)  => Unit = (_, _) => {}
   )(implicit gg: GraphicsGenerator): Sprite = {
     val w = rect.width.toFloat  / board.width
     val h = rect.height.toFloat / board.height
-    val image = gg.createAndDrawPImage(rect.width + 1, rect.height + 1) {
+    val image = gg.createAndDrawPImage(rect.width, rect.height) {
       g =>
+      g.noStroke()        
       board foreach {
         case (pos, status) =>
         val (red, green, blue) = gg.rgb(BoardValueColors(status))
         g.fill(red, green, blue)
         g.rect(pos.x * w, pos.y * h, w, h)
       }
+      draw(g, rect)
     }
-    Sprite(image, rect)
+    new Sprite(image, rect)
   }
 
   def registerButtons(

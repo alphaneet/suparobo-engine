@@ -33,7 +33,7 @@ object Board {
   }  
 }
 
-case class Board(
+class Board(
   val width: Int,
   val height: Int,
   val name: String = "",  

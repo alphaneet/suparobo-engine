@@ -6,7 +6,7 @@ class Deck(val maxCost: Int) extends NotNull {
 
   def foreach(f: Character => Unit) {
     champion foreach { f(_) }
-    minions foreach { f(_) }
+    minions  foreach { f(_) }
   }
 
   def clear() {
@@ -35,8 +35,9 @@ class Deck(val maxCost: Int) extends NotNull {
   } catch {
     case _ => false
   }
- 
-  def isCostOver: Boolean = nowCost > maxCost
+
+  def isMaxCost:  Boolean = nowCost == maxCost
+  def isCostOver: Boolean = nowCost >  maxCost
 
   def nowCost: Int =
     champion.map(_.param.cost).getOrElse(0) + minions.foldLeft(0)(_ + _.param.cost)
@@ -90,6 +91,22 @@ class Deck(val maxCost: Int) extends NotNull {
       }
     }
     
+    this
+  }
+
+  def random(champions: List[Champion], minions: List[Minion]): this.type = {
+    import scala.util.Random.{nextInt, shuffle}
+
+    this.clear()    
+    this.champion = Option(champions(nextInt(champions.size)))
+
+    shuffle(minions) foreach {
+      minion =>
+      this.minions += minion
+      if (this.isCostOver) this.minions -= minion
+      if (this.isMaxCost)  return this
+    }
+
     this
   }
 }

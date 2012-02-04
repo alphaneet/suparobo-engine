@@ -41,7 +41,15 @@ case class BoardSelectScene(
       filename =>
 
       val board = Board.loadXML(BOARDS_PATH + filename)    
-      val sprite = createBoardSprite(board, viewerRect)
+      val sprite = createBoardSprite(
+        board,
+        viewerRect,
+        (g, rect) => {
+          g.stroke(C5R, C5G, C5B)
+          g.noFill()
+          g.rect(0, 0, rect.width - 1, rect.height - 1)
+        }        
+      )
       val buttonImages = List(
         (C2, C5),
         (C1, C4),

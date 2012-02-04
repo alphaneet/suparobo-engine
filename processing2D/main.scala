@@ -7,7 +7,18 @@ object Main extends SPApplet {
     frameRate(24)
     val i18n = createI18N("ja")
     title = i18n.t("title")
-    TitleScene()(this, i18n)
+//    TitleScene()(this, i18n)
+
+    // TK: test
+    def create = Option(new Player(createDeck.random(champions, minions)))
+    GameScene(
+      Game(
+        self  = create,
+        other = create,
+//        board = Option(new Board(10, 20))
+        board = Option(Board.loadXML(BOARDS_PATH + "stage3.xml"))
+      )
+    )(this, i18n)
   }
 }
 

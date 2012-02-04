@@ -27,7 +27,11 @@ case class TitleScene(implicit applet: SPApplet, i18n: I18N) extends Scene(apple
     size = 12
   )
 
-  def start() { BoardSelectScene() }
+  def start() {
+    val other = Option(Player(createDeck.random(champions, minions)))
+    BoardSelectScene(Game(other = other))
+  }
+  
   def network() { println("未実装") }
   def deck() { DeckMakeScene() }
   def replay() { println("未実装") }

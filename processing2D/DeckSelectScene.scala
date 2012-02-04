@@ -12,7 +12,7 @@ case class DeckSelectScene(
     menuBtnMgr,
     List(
       ('entry, t("entry"), entry _),
-      ('save,  t("save"),  save _),      
+      ('save,  t("clear"), clear _),      
       ('back,  t("back"),  back _)
     )
   )
@@ -24,7 +24,15 @@ case class DeckSelectScene(
   )
   
   val boardViewer: Option[Sprite] = game.board.map {
-    createBoardSprite(_, layout.rect('viewer))
+    createBoardSprite(
+      _,
+      layout.rect('viewer),
+      (g, rect) => {
+        g.stroke(C5R, C5G, C5B)
+        g.noFill()
+        g.rect(0, 0, rect.width - 1, rect.height - 1)
+      }
+    )
   }
     
   def back() {
@@ -35,14 +43,17 @@ case class DeckSelectScene(
 
   def entry() {
     dialog.confirm(nowDeckName + " " + t("DeckSelectScene.entryMessage")) {
+      save {
+        val self = Option(Player(nowDeck))
+        GameScene(game.copy(self = self))
+      }
     }
   }
 
   override def draw() {
-    applet.background(C2)    
-        
+    applet.background(C2)   
     title.draw()
-    boardNameLabel.draw()
+    boardNameLabel.draw()    
     boardViewer foreach { _.draw() }
     super.draw()
   }  

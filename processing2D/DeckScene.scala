@@ -13,16 +13,6 @@ abstract class DeckScene(
 
   val dialog = new MyDialog
   
-  val champions: List[Champion] = Champion.loadChampions(
-    CHARACTERS_PATH + "championProfiles.xml",
-    CHARACTERS_PATH + "championParameters.xml"
-  )
-
-  val minions: List[Minion] = Minion.loadMinions(
-    CHARACTERS_PATH + "minionProfiles.xml",
-    CHARACTERS_PATH + "minionParameters.xml"
-  )
-  
   val decks: List[Deck] = List.range(0, MAX_DECK) map { i => createDeck() }
   var nowDeck = decks(0)
      
@@ -203,25 +193,24 @@ abstract class DeckScene(
   }
 
   def nowDeckName: String = t("deck") + (decks.indexOf(nowDeck) + 1)
-  
-  def save() {    
-    dialog.confirm(nowDeckName + " " + t("confirm.save")) {
-      try {
-        val filename = DECKS_PATH + "deck" + decks.indexOf(nowDeck) + ".xml"
-        nowDeck.entry().saveXML(filename)        
-        dialog.message(t("execute.save"))
-      } catch {
-        case _: NoSuchChampionException =>
-          dialog.message(t("NoSuchChampionException"))
-        case _: OverCostException =>
-          dialog.message(t("OverCostException"))
-        case ex =>
-          ex.printStackTrace(Console.err)
-          dialog.message(ex.getClass.getSimpleName)
-      }
-    }
+
+  def save(success: => Unit = {}) {
+    try {
+      val filename = DECKS_PATH + "deck" + decks.indexOf(nowDeck) + ".xml"
+      nowDeck.entry().saveXML(filename)
+      success
+    } catch {
+      case _: NoSuchChampionException =>
+        println(nowDeck)
+        dialog.message(t("NoSuchChampionException"))
+      case _: OverCostException =>
+        dialog.message(t("OverCostException"))
+      case ex =>
+        ex.printStackTrace(Console.err)
+        dialog.message(ex.getClass.getSimpleName)
+    }    
   }
-  
+    
   def clear() {
     dialog.confirm(nowDeckName + " " +  t("confirm.clear")) {
       nowDeck.clear()
