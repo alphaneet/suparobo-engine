@@ -39,6 +39,9 @@
 
   <NoSuchChampionException>チャンピオンを選択してください</NoSuchChampionException>
   <OverCostException>コストオーバーです</OverCostException>
+  <NoSuchSelfPlayerException>手前のプレイヤーが選択されません</NoSuchSelfPlayerException>
+  <NoSuchOtherPlayerException>奥のプレイヤーが選択されてません</NoSuchOtherPlayerException>
+  <NoSuchBoardException>ステージが選択されてません</NoSuchBoardException>
   
   <TitleScene>
     <start>ステージ選択</start>

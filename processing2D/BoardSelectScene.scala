@@ -1,7 +1,7 @@
 package com.github.alphaneet.suparobo
 
 case class BoardSelectScene(
-  game: Game = Game()
+  gameMaker: GameMaker = GameMaker()
 )(implicit
   applet: SPApplet,
   i18n: I18N
@@ -81,7 +81,7 @@ case class BoardSelectScene(
       return
     }
 
-    DeckSelectScene(game.copy(board = selectBoard.map(_.board)))
+    DeckSelectScene(gameMaker.copy(board = selectBoard.map(_.board)))
   }
   
   def back() {

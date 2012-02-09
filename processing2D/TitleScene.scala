@@ -28,8 +28,8 @@ case class TitleScene(implicit applet: SPApplet, i18n: I18N) extends Scene(apple
   )
 
   def start() {
-    val other = Option(Player(createDeck.random(champions, minions)))
-    BoardSelectScene(Game(other = other))
+    val enemy = Option(Player(createDeck.random(champions, minions)))
+    BoardSelectScene(GameMaker(outside = enemy))
   }
   
   def network() { println("未実装") }

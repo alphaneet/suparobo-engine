@@ -1,7 +1,7 @@
 package com.github.alphaneet.suparobo
 
 case class DeckSelectScene(
-  game: Game = Game()
+  gameMaker: GameMaker = GameMaker()
 )(implicit
   applet: SPApplet,
   i18n: I18N
@@ -18,12 +18,12 @@ case class DeckSelectScene(
   )
 
   val boardNameLabel = createLabel(
-    game.board.map(_.name).getOrElse(""),
+    gameMaker.board.map(_.name).getOrElse(""),
     'boardName,
     size = 20
   )
   
-  val boardViewer: Option[Sprite] = game.board.map {
+  val boardViewer: Option[Sprite] = gameMaker.board.map {
     createBoardSprite(
       _,
       layout.rect('viewer),
@@ -37,15 +37,25 @@ case class DeckSelectScene(
     
   def back() {
     dialog.confirm(t("BoardSelectScene.back")) {
-      BoardSelectScene(game)
+      BoardSelectScene(gameMaker)
     }
   }
 
   def entry() {
     dialog.confirm(nowDeckName + " " + t("DeckSelectScene.entryMessage")) {
       save {
-        val self = Option(Player(nowDeck))
-        GameScene(game.copy(self = self))
+        try {
+          val self = Option(Player(nowDeck))
+          val game = gameMaker.copy(inside = self).createGame()
+          GameScene(game)
+        } catch {
+          case _: NoSuchInsidePlayerException  =>
+            dialog.message(t("NoSuchSelfPlayerException"),  DeckSelectScene(gameMaker))
+          case _: NoSuchOutsidePlayerException =>
+            dialog.message(t("NoSuchOtherPlayerException"), TitleScene())
+          case _: NoSuchBoardException =>
+            dialog.message(t("NoSuchBoardException"), BoardSelectScene(gameMaker))
+        }
       }
     }
   }

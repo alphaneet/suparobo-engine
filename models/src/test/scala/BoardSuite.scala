@@ -5,7 +5,7 @@ class BoardSuite extends FunSuite with ShouldMatchers {
   class Fixture(
     val width: Int,
     val height: Int,
-    val data: Seq[BoardValue] = Nil    
+    val data: Seq[Board.Status] = Nil    
   ) extends BoardFixture {
     implicit val board = new Board(width, height, defaultData = data)
   }
@@ -22,7 +22,7 @@ class BoardSuite extends FunSuite with ShouldMatchers {
 
   test("defaultData.size と #size が違う場合は FLAT で初期化される") {
     new BoardFixture {
-      val data: Array[BoardValue] = Array(
+      val data: Array[Board.Status] = Array(
         WOOD,  HILL,
         MOUNT, WOOD,
         HILL,  FLAT

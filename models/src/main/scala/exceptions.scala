@@ -19,3 +19,15 @@ class NoSuchChampionException(msg: String = "") extends Exception(msg)
 
 // コストオーバーの場合
 class OverCostException(msg: String = "") extends Exception(msg)
+
+// 手前のプレイヤーが選択されていない場合
+class NoSuchInsidePlayerException(msg: String = "") extends Exception(msg)
+
+// 奥のプレイヤーが選択されていない場合
+class NoSuchOutsidePlayerException(msg: String = "") extends Exception(msg)
+
+// ステージが選択されていない場合
+class NoSuchBoardException(msg: String = "") extends Exception(msg)
+
+//
+class IllegalGotoGameStatusException(msg: String = "") extends Exception(msg)

@@ -10,13 +10,13 @@ object Main extends SPApplet {
 //    TitleScene()(this, i18n)
 
     // TK: test
-    def create = Option(new Player(createDeck.random(champions, minions)))
+    def create = new Player(createDeck.random(champions, minions))
     GameScene(
       Game(
-        self  = create,
-        other = create,
+        inside  = create,
+        outside = create,
 //        board = Option(new Board(10, 20))
-        board = Option(Board.loadXML(BOARDS_PATH + "stage3.xml"))
+        board = Board.loadXML(BOARDS_PATH + "stage3.xml")
       )
     )(this, i18n)
   }
@@ -98,8 +98,12 @@ abstract class Dialog(val applet: SPApplet) {
     mode = Option(Confirm)
   }
 
-  def message(body: String) {
+  def message(body: String, action: => Unit = {}) {
     isOpen = true
+    Message.ok.action {
+      isOpen = false
+      action
+    }    
     Message.body = body
     mode = Option(Message)
   }

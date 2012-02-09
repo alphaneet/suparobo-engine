@@ -9,7 +9,7 @@ case class GameScene(
 //  implicit val layout = new LayoutXML(LAYOUTS_PATH + "BoardSelectScene.xml")
   implicit val gg     = new GraphicsGenerator(applet)
   
-  val board = game.board.get // TK: ちょい適当 @ で直す
+  val board = game.board
   object boardViewer {
     val width  = applet.width
     val height = width * (board.height / board.width)
