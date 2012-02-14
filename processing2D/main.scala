@@ -9,16 +9,16 @@ object Main extends SPApplet {
     title = i18n.t("title")
 //    TitleScene()(this, i18n)
 
-    // TK: test
-    def create = new Player(createDeck.random(champions, minions))
-    GameScene(
-      Game(
-        inside  = create,
-        outside = create,
-//        board = Option(new Board(10, 20))
-        board = Board.loadXML(BOARDS_PATH + "stage3.xml")
-      )
-    )(this, i18n)
+     // TK: test
+     def create = new Player(createDeck.random(champions, minions))
+     GameScene(
+       Game(
+         inside  = create,
+         outside = create,
+ //        board = Option(new Board(10, 20))
+         board = Board.loadXML(BOARDS_PATH + "stage3.xml")
+       )
+     )(this, i18n)
   }
 }
 

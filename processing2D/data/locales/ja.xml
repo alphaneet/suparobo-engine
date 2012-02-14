@@ -63,5 +63,9 @@
     <select>デッキ選択へ</select>
     <PleaseSelect>ステージを選択してください</PleaseSelect>
     <back>ステージ選択に戻りますか？</back>
-  </BoardSelectScene>  
+  </BoardSelectScene>
+  
+  <GameScene>
+    <setup>カードを配置してください</setup>
+  </GameScene>
 </ja>

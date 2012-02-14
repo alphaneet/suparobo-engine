@@ -32,7 +32,7 @@ abstract class DeckScene(
   val deckButtons      = LinkedHashMap[Deck,      deckBtnMgr.Button]()
     
   object characterLabels {
-    private var nowCharacter = Character.empty()
+    private var nowCharacter = Character()
 
     case class Value(symbol: Symbol) {
       val text = if (symbol == 'name) "" else t("parameter." + symbol.name)
@@ -168,7 +168,7 @@ abstract class DeckScene(
       champion =>
       registerCharacter(champion) {
         nowDeck.champion =
-          if (nowDeck.existsChampion(champion)) {
+          if (nowDeck.champion.exists(_ == champion)) {
             None
           } else {
             Option(champion)
@@ -181,7 +181,7 @@ abstract class DeckScene(
     minions foreach {
       minion =>
       registerCharacter(minion) {
-        if (nowDeck.existsMinion(minion)) {
+        if (nowDeck.minions.exists(_ == minion)) {
           nowDeck.minions -= minion
         } else {
           nowDeck.minions += minion
@@ -243,7 +243,7 @@ abstract class DeckScene(
       applet.rect(btn.x, btn.y, btn.width, btn.height)
     }
              
-    nowDeck foreach {
+    nowDeck.characters foreach {
       character =>
 
       val btn = characterButtons(character)

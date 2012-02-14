@@ -29,5 +29,5 @@ class NoSuchOutsidePlayerException(msg: String = "") extends Exception(msg)
 // ステージが選択されていない場合
 class NoSuchBoardException(msg: String = "") extends Exception(msg)
 
-//
-class IllegalGotoGameStatusException(msg: String = "") extends Exception(msg)
+// そのステータスは現状許可されてない場合
+class IllegalGameStatusException(msg: String = "") extends Exception(msg)

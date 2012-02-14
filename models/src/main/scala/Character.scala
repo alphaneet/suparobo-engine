@@ -1,8 +1,6 @@
 package com.github.alphaneet.suparobo
 
-// TK: 一時的に適当に定義。あとで model.scala と混ぜる。
 object CharacterProfile {
-    
   def loadProfiles(filename: String): List[CharacterProfile] =
     loadProfiles(scala.xml.XML.loadFile(filename))
   
@@ -17,14 +15,12 @@ object CharacterProfile {
       )
     } toList
   }
-
-  def empty() = CharacterProfile(0, "", 'None)
 }
 
 case class CharacterProfile(
-  id: Int,
-  name: String,
-  symbol: Symbol
+  id: Int        = 0,
+  name: String   = "",
+  symbol: Symbol = 'None
 ) extends NotNull
 
 object CharacterParameter {
@@ -43,70 +39,43 @@ object CharacterParameter {
         to int 'cost
       )
     } getOrElse {
-      this.empty()
+      CharacterParameter()
     }
   }
-  
-  def empty() = CharacterParameter(
-    hitPoint         = 0,
-    moveRangePoint   = 0,
-    attackPoint      = 0,
-    attackRangePoint = 0,
-    guardPoint       = 0,
-    cost             = 0
-  )
 }
 
 case class CharacterParameter(
-  var hitPoint: Int,
-  var moveRangePoint: Int,
-  var attackPoint: Int,
-  var attackRangePoint: Int,
-  var guardPoint: Int,
-  var cost: Int
-) extends NotNull {
-
-  // TK: いらんかも？様子見
-  /*
-  def update(
-    hitPoint: Int,
-    moveRangePoint: Int,
-    attackPoint: Int,
-    attackRangePoint: Int,
-    guardPoint: Int,
-    cost: Int    
-  ): Unit = this update CharacterParameter(
-    hitPoint,
-    moveRangePoint,
-    attackPoint,
-    attackRangePoint,
-    guardPoint,
-    cost
-  )
-
-  def update(param: CharacterParameter) {
-    this.hitPoint = param.hitPoint
-    this.moveRangePoint = param.moveRangePoint
-    this.attackPoint = param.attackPoint
-    this.attackRangePoint = param.attackRangePoint
-    this.guardPoint = param.guardPoint
-    this.cost = param.cost
-  }
-  */
-}
+  var hitPoint: Int         = 0,
+  var moveRangePoint: Int   = 0,
+  var attackPoint: Int      = 0,
+  var attackRangePoint: Int = 0,
+  var guardPoint: Int       = 0,
+  var cost: Int             = 0
+) extends NotNull
 
 object Character {
-  def empty(): Character = new Character {
-    val profile = CharacterProfile.empty()
-    val param = CharacterParameter.empty()
+  def apply() = new Character {
+    val profile = CharacterProfile()
+    val param   = CharacterParameter()
   }
 }
 
-abstract class Character extends NotNull {  
+@cloneable trait Character extends NotNull {
   // TK: 重複がないかのチェック処理を入れるべきかも
-  // その時はChampion と Minion はID領域は別にするかも検証（多分 XML ファイル分かれてるので別にしたほうがいい
+  // その時はChampion と Minion はID領域は別にするかも検証
+  // 多分 XML ファイル分かれてるので別にしたほうがいい
   val profile: CharacterProfile
   val param: CharacterParameter
+  
+  var pos = Position()
+
+  override def hashCode = profile.hashCode
+  override def equals(that: Any): Boolean = that match {
+    case x: Character => profile == x.profile
+    case _ => false
+  }
+  override def clone(): this.type = super.clone.asInstanceOf[this.type]
+  override def toString = "%s %s %s".format(profile, param, pos)
 }
 
 object Champion {
@@ -129,7 +98,7 @@ object Champion {
   }
 }
 
-abstract class Champion extends Character
+trait Champion extends Character
 
 object Minion {
   def loadMinions(
@@ -150,7 +119,8 @@ object Minion {
     }    
   }
 }
-abstract class Minion extends Character
+
+trait Minion extends Character
 
 // 今回ではタイプによる特別処理はしないのでこれらは使わない。
 // パラメーター調整でタイプを表現する。
@@ -160,11 +130,10 @@ trait Tank
 trait Carry
 trait Fighter
 
-// ここらへんマクロ実装されたら回したい
-abstract class TankChampion extends Character with Tank
-abstract class CarryChampion extends Character with Carry
-abstract class FighterChampion extends Character with Fighter
+trait TankChampion extends Character with Tank
+trait CarryChampion extends Character with Carry
+trait FighterChampion extends Character with Fighter
 
-abstract class TankMinion extends Minion with Tank
-abstract class CarryMinion extends Minion with Carry
-abstract class FighterMinion extends Minion with Fighter
+trait TankMinion extends Minion with Tank
+trait CarryMinion extends Minion with Carry
+trait FighterMinion extends Minion with Fighter

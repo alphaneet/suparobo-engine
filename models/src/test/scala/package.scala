@@ -11,8 +11,15 @@ package object suparobo {
     val MOUNT  = Board.MOUNT    
   }  
   
-  trait CharactersFixture {
-    val REIMU = new Champion {      
+  trait CharactersFixture {    
+    def REIMU:  Champion = _REIMU.clone()
+    def MARISA: Champion = _MARISA.clone()
+
+    def TANK: Minion     = _TANK.clone()
+    def CARRY: Minion    = _CARRY.clone()
+    def FIGHTER: Minion  = _FIGHTER.clone()    
+
+    private val _REIMU = new Champion {      
       val profile = CharacterProfile(
         id = 1,
         name = "霊夢",
@@ -29,7 +36,7 @@ package object suparobo {
       )
     }
     
-    val MARISA = new Champion {
+    private val _MARISA = new Champion {
       val profile = CharacterProfile(
         id = 2,
         name = "魔理沙",
@@ -46,7 +53,7 @@ package object suparobo {
       )
     }
     
-    val TANK = new Minion {
+    private val _TANK = new Minion {
       val profile = CharacterProfile(
         id = 1,
         name = "タンク",
@@ -63,7 +70,7 @@ package object suparobo {
       )
     }
 
-    val CARRY = new Minion {
+    private val _CARRY = new Minion {
       val profile = CharacterProfile(
         id = 2,
         name = "キャリー",
@@ -80,7 +87,7 @@ package object suparobo {
       )
     }
 
-    val FIGHTER = new Minion {
+    private val _FIGHTER = new Minion {
       val profile = CharacterProfile(
         id = 3,
         name = "ファイター",

@@ -7,9 +7,9 @@ class BoardSuite extends FunSuite with ShouldMatchers {
     val height: Int,
     val data: Seq[Board.Status] = Nil    
   ) extends BoardFixture {
-    implicit val board = new Board(width, height, defaultData = data)
+    val board = new Board(width, height, defaultData = data)
   }
-  
+
   test("マップを作成したら、縦x横の領域が確保されて全てFLAT(平地)で初期化されている。")
   {
     new Fixture(10, 20) {
@@ -59,13 +59,14 @@ class BoardSuite extends FunSuite with ShouldMatchers {
       board(Position(4, 9)) should be (MOUNT)
     }
   }
-  
+
   test("マップデータのインデックスは0から数える。" +
        "0より小さかったり最大値(width - 1, height - 1, size - 1)より" +
        "大きかった場合は例外を出す")
   {
     new Fixture(5, 5) {
-      board(0, 0) should be (FLAT)      
+      board(0, 0) should be (FLAT)
+      
       evaluating { board(-1, -1)        } should produce [OutsideBoardException]  
       evaluating { board(-1, -1) = FLAT } should produce [OutsideBoardException]  
 
@@ -105,5 +106,28 @@ class BoardSuite extends FunSuite with ShouldMatchers {
         MOUNT, HILL,  MOUNT
       ))
     }
+  }
+
+  // ja: #pos, #index は指定座標がボード内か判定している
+  test("#pos, #index should check inside board") {
+    new Fixture(10, 20) {
+      evaluating { board.pos(-1)         } should produce [OutsideBoardException]
+      evaluating { board.pos(board.size) } should produce [OutsideBoardException]
+      
+      evaluating { board.pos(-1, 0)      } should produce [OutsideBoardException]
+      evaluating { board.pos(0, -1)      } should produce [OutsideBoardException]
+      evaluating { board.pos(10, 0)      } should produce [OutsideBoardException]
+      evaluating { board.pos(0, 20)      } should produce [OutsideBoardException]
+      
+      evaluating { board.index(-1, 0)    } should produce [OutsideBoardException]
+      evaluating { board.index(0, -1)    } should produce [OutsideBoardException]
+      evaluating { board.index(10, 0)    } should produce [OutsideBoardException]
+      evaluating { board.index(0, 20)    } should produce [OutsideBoardException]      
+    }
+  }
+
+  // ja: #lastIndex は最後のインデックス
+  test("#lastIndex should be last index lol") {
+    new Fixture(10, 20) { board.lastIndex should be (199) }
   }
 }

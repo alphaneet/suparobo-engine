@@ -4,23 +4,13 @@ class Deck(val maxCost: Int) extends NotNull {
   var champion: Option[Champion] = None
   val minions = scala.collection.mutable.LinkedHashSet[Minion]()
 
-  def foreach(f: Character => Unit) {
-    champion foreach { f(_) }
-    minions  foreach { f(_) }
-  }
+  def characters: List[Character] =
+    champion.map(List(_)).getOrElse(Nil) ::: minions.toList
 
   def clear() {
     champion = None
     minions.clear()
-  }
-  
-  def existsChampion(other: Champion): Boolean = {
-    champion exists(_ == other)
-  }
-
-  def existsMinion(other: Minion): Boolean = {
-    minions exists(_ == other)
-  }
+  }  
   
   def entry(): this.type = {
     if (champion.isEmpty) throw new NoSuchChampionException

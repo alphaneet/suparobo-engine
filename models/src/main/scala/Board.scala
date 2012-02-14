@@ -1,7 +1,7 @@
 package com.github.alphaneet.suparobo
 
 object Board {
-  sealed case class Status(id: Int, symbol: Symbol, rangeCost: Int) {
+  abstract sealed case class Status(id: Int, symbol: Symbol, rangeCost: Int) {
     val isMove: Boolean = (rangeCost > 0)    
   }
   
@@ -46,15 +46,24 @@ class Board(
     defaultData.toArray
   }
 
-  def pos(index: Int) = Position(index % width, index / width)(this)
-  def index(pos: Position):  Int = index(pos.x, pos.y)
-  def index(x: Int, y: Int): Int = x + y * width
-  
-  def apply(pos: Position):  Board.Status = apply(pos.x, pos.y)
-  def apply(x: Int, y: Int): Board.Status = {
+  def pos(x: Int, y: Int): Position = {
     checkRectangle(x, y)
-    apply(index(x, y))
-  }  
+    Position(x, y)
+  }
+  def pos(index: Int): Position = {
+    apply(index)
+    Position(index % width, index / width)
+  }
+  def index(pos: Position):  Int = index(pos.x, pos.y)
+  def index(x: Int, y: Int): Int = {
+    checkRectangle(x, y)
+    x + y * width
+  }
+
+  def lastIndex = size - 1
+  
+  def apply(pos: Position):  Board.Status = apply(index(pos.x, pos.y))
+  def apply(x: Int, y: Int): Board.Status = apply(index(x, y))  
   def apply(index: Int): Board.Status = try {
     data(index)
   } catch {
@@ -62,17 +71,18 @@ class Board(
       throw new OutsideBoardException("index: " + index)
   }
 
-  def update(pos: Position, status: Board.Status) { update(pos.x, pos.y, status) }    
+  def update(pos: Position, status: Board.Status)  {
+    update(index(pos.x, pos.y), status)
+  }    
   def update(x: Int, y: Int, status: Board.Status) {
-    checkRectangle(x, y)
     update(index(x, y), status)
-  }  
+  }
   def update(index: Int, status: Board.Status): Unit = try {
     data(index) = status
   } catch {
     case _: ArrayIndexOutOfBoundsException =>
       throw new OutsideBoardException("index: " + index)
-  }
+  }     
   
   def checkWidth(x: Int) {
     if (x < 0 || x >= width) throw new OutsideBoardException("x = " + x)

@@ -14,18 +14,19 @@ package object suparobo extends processing.core.PConstants {
   val MAX_COST = 13
   
   def createDeck() = new Deck(MAX_COST)
-  
-  val champions: List[Champion] = Champion.loadChampions(
+
+  private val _champions: List[Champion] = Champion.loadChampions(
     CHARACTERS_PATH + "championProfiles.xml",
     CHARACTERS_PATH + "championParameters.xml"
   )
+  def champions: List[Champion] = _champions.map(_.clone)
 
-  val minions: List[Minion] = Minion.loadMinions(
+  private val _minions: List[Minion] = Minion.loadMinions(
     CHARACTERS_PATH + "minionProfiles.xml",
     CHARACTERS_PATH + "minionParameters.xml"
   )
+  def minions: List[Minion] = _minions.map(_.clone)
   
-
   // thanks for http://kuler.adobe.com/#themeID/1692819
   
   val C1  = 0xFFE8E8
@@ -64,6 +65,7 @@ package object suparobo extends processing.core.PConstants {
 
   type PImage     = processing.core.PImage
   type PGraphics  = processing.core.PGraphics
+  type PVector    = processing.core.PVector
   
   import com.github.alphaneet._
   type SPApplet          = scala_processing.SPApplet
@@ -101,7 +103,7 @@ package object suparobo extends processing.core.PConstants {
     def draw()(implicit applet: SPApplet) {      
       applet.image(image, x, y, width, height)
     }
-  }
+  }  
 
   def createLabel(
     text: Any,
